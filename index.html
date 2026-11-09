@@ -123,6 +123,22 @@ button.btn{font:inherit;font-weight:600;border-radius:var(--radius-sm);padding:1
   border:1px solid var(--line);background:var(--panel);color:var(--ink)}
 button.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:1.05rem}
 button.btn:disabled{opacity:.45;cursor:not-allowed}
+/* Micro-interacțiuni: proprietăți listate explicit (nu „all”), ca să nu animăm font-size și layout-ul */
+button.btn{transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease,transform .2s ease}
+button.btn:not(:disabled):hover{border-color:var(--accent);box-shadow:0 2px 6px rgba(24,32,44,.12);transform:translateY(-1px)}
+button.btn.primary:not(:disabled):hover{box-shadow:0 4px 12px rgba(29,63,143,.28)}
+button.btn:active:not(:disabled){transform:translateY(0)}
+/* „✓ Copiat” după copiere: fundal verde-petrol, text alb; contrastul e măsurat, nu presupus */
+button.btn.copied{background:#0F6B5E;border-color:#0F6B5E;color:#FFFFFF}
+/* Confirmare inline (înlocuiește dialogurile native) */
+.ask-inline{flex-basis:100%;margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:var(--radius-sm);background:var(--accent-soft);color:var(--ink);animation:askIn .2s ease}
+.ask-inline p{margin:0 0 10px;font-size:.95rem}
+.ask-actions{display:flex;flex-wrap:wrap;gap:8px}
+@keyframes askIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){
+  button.btn,button.btn:hover,button.btn:active,.ask-inline{transition:none!important;animation:none!important;transform:none!important}
+}
 button.btn.small{min-height:40px;padding:8px 12px;font-size:.88rem;font-weight:500}
 .actions{display:grid;grid-template-columns:1fr;gap:8px;margin-top:14px}
 @media (min-width:560px){.actions{grid-template-columns:1fr 1fr}.actions .primary{grid-column:1 / -1}}
@@ -1843,6 +1859,37 @@ const judNume = c => (JUDETE.find(j=>j[0]===c)||["",""])[1];
 
 function toast(msg){const t=$("#toast");t.textContent=msg;t.classList.add("show");clearTimeout(toast._t);toast._t=setTimeout(()=>t.classList.remove("show"),2400)}
 
+/* Confirmare inline: înlocuiește confirm(), care bloca pagina. Cardul apare lângă buton,
+   Enter/Tab ajung la „Da”, Escape sau „Renunță” închid cardul și readuc focusul pe buton. */
+function askInline(o){
+  // o: {after, back, msg, ok, run, cancel?}
+  document.querySelectorAll(".ask-inline").forEach(n=>n.remove());
+  const box=document.createElement("div");
+  box.className="ask-inline";
+  box.setAttribute("role","group");
+  box.setAttribute("aria-label","Confirmare");
+  const p=document.createElement("p"); p.textContent=o.msg;
+  const row=document.createElement("div"); row.className="ask-actions";
+  const yes=document.createElement("button"); yes.type="button"; yes.className="btn primary"; yes.textContent=o.ok;
+  const no=document.createElement("button"); no.type="button"; no.className="btn"; no.textContent="Renunță";
+  row.append(yes,no); box.append(p,row);
+  yes.onclick=()=>{ box.remove(); if(o.back) o.back.focus(); o.run(); };
+  no.onclick=()=>{ box.remove(); if(o.back) o.back.focus(); if(o.cancel) o.cancel(); };
+  box.addEventListener("keydown",e=>{ if(e.key==="Escape"){ e.preventDefault(); no.click(); } });
+  o.after.insertAdjacentElement("afterend",box);
+  yes.focus();
+  announce(o.msg);
+}
+const missingMsg=(m,subiect,tail)=>`${subiect} are încă câmpuri necompletate (${m.join(", ")}). ${tail}`;
+
+/* Feedback pe buton după copiere: eticheta devine „✓ Copiat” două secunde, doar la succes */
+function flashCopied(btn,msg){
+  if(!btn._orig) btn._orig=btn.textContent;
+  clearTimeout(btn._t);
+  btn.textContent=msg; btn.classList.add("copied");
+  btn._t=setTimeout(()=>{ btn.textContent=btn._orig; btn.classList.remove("copied"); },2000);
+}
+
 /* Lista UAT pentru un județ: baza + importuri (importul câștigă la nume identic) */
 function uatList(jud){
   const m = new Map();
@@ -2119,10 +2166,9 @@ $("#exportBtn").onclick=()=>{
   const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="uat-primarii.json";
   document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 };
-$("#resetDbBtn").onclick=()=>{
-  if(!confirm("Ștergi toate primăriile importate de pe acest dispozitiv? Lista demonstrativă rămâne."))return;
-  dbImp={};store.del(K.db);fillJudete();fillUat();renderEmailStatus();toast("Importurile au fost șterse");
-};
+$("#resetDbBtn").onclick=()=>askInline({after:$("#resetDbBtn"),back:$("#resetDbBtn"),ok:"Șterge importurile",
+  msg:"Ștergi toate primăriile importate de pe acest dispozitiv? Lista demonstrativă rămâne.",
+  run:()=>{ dbImp={};store.del(K.db);fillJudete();fillUat();renderEmailStatus();toast("Importurile au fost șterse"); }});
 
 /* ================================================================
    7. PAS 2 — PETENT (salvare automată)
@@ -2132,12 +2178,13 @@ for(const [id,key] of Object.entries(PF)){
   const el=$("#"+id); el.value=petent[key]||(key==="gen"?"m":"");
   el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{petent[key]=el.value.trim?el.value.trim():el.value;store.set(K.petent,petent);render()});
 }
-$("#clearPetent").onclick=()=>{
-  if(!confirm("Ștergi numele, adresa, telefonul și e-mailul salvate pe acest dispozitiv?"))return;
-  petent={nume:"",gen:"m",adresa:"",tel:"",email:""};store.del(K.petent);
-  for(const [id,key] of Object.entries(PF)) $("#"+id).value=petent[key];
-  render();toast("Datele tale au fost șterse de pe dispozitiv");
-};
+$("#clearPetent").onclick=()=>askInline({after:$("#clearPetent"),back:$("#clearPetent"),ok:"Șterge datele",
+  msg:"Ștergi numele, adresa, telefonul și e-mailul salvate pe acest dispozitiv?",
+  run:()=>{
+    petent={nume:"",gen:"m",adresa:"",tel:"",email:""};store.del(K.petent);
+    for(const [id,key] of Object.entries(PF)) $("#"+id).value=petent[key];
+    render();toast("Datele tale au fost șterse de pe dispozitiv");
+  }});
 
 /* ================================================================
    8. PAS 3 — ȘABLON
@@ -2596,32 +2643,34 @@ $("#anexeInput").addEventListener("change",e=>{
   }
   e.target.value=""; renderAnexe(); render();
 });
-$("#shareBtn").onclick=async()=>{
+async function shareDoc(){
   if(AND){
-    const m=missingList();
-    if(m.length && !confirm("Documentul are încă câmpuri necompletate ("+m.join(", ")+"). Trimiți oricum?")) return;
     try{
       const files=[]; for(const a of anexe){ files.push({name:a.file.name, mime:a.file.type||"application/octet-stream", b64:await b64OfBlob(a.file)}); }
       AND.sendEmail(sel.email||"", subject(), cleanText(buildText()), JSON.stringify(files));
     }catch(e){ toast("Trimiterea cu anexe nu a funcționat; atașează fișierele manual în e-mail"); }
     return;
   }
-  const m=missingList();
-  if(m.length && !confirm("Documentul are încă câmpuri necompletate ("+m.join(", ")+"). Trimiți oricum?")) return;
   try{ await navigator.clipboard.writeText(sel.email); toast("Adresa destinatarului a fost copiată: lipește-o în câmpul „Către”"); }catch(e){ toast("Scrie manual destinatarul: "+sel.email); }
   try{
     await navigator.share({files:anexe.map(a=>a.file), title:subject(), text:cleanText(buildText())});
   }catch(err){
     if(err && err.name!=="AbortError") toast("Trimiterea cu anexe nu a funcționat; atașează fișierele manual în e-mail");
   }
+}
+$("#shareBtn").onclick=()=>{
+  const m=missingList();
+  if(m.length){ askInline({after:$("#shareBtn"),back:$("#shareBtn"),ok:"Trimite oricum",
+    msg:missingMsg(m,"Documentul","Trimiți oricum?"),run:shareDoc}); return; }
+  shareDoc();
 };
 $("#copyBtn").onclick=async()=>{
   const t=`Către: ${sel.email||"[e-mail primărie]"}\nSubiect: ${subject()}\n\n`+cleanText(buildText());
-  try{await navigator.clipboard.writeText(t);toast("Textul a fost copiat")}
+  try{ await navigator.clipboard.writeText(t); flashCopied($("#copyBtn"),"✓ Copiat în clipboard!"); }
   catch(e){
     const ta=document.createElement("textarea");ta.value=t;ta.style.position="fixed";ta.style.opacity="0";
     document.body.appendChild(ta);ta.select();
-    try{document.execCommand("copy");toast("Textul cererii a fost copiat")}catch(_){toast("Copierea a eșuat; selectează textul manual")}
+    try{document.execCommand("copy");flashCopied($("#copyBtn"),"✓ Copiat în clipboard!")}catch(_){toast("Copierea a eșuat; selectează textul manual")}
     ta.remove();
   }
 };
@@ -2631,9 +2680,10 @@ $("#copyBtn").onclick=async()=>{
    ================================================================ */
 $("#printBtn").onclick=()=>{
   const m=missingList();
-  if(m.length && !confirm("Documentul are încă câmpuri necompletate ("+m.join(", ")+"). Tipărești oricum?")) return;
-  setPrintHost("h4");
-  window.print();
+  const run=()=>{ setPrintHost("h4"); window.print(); };
+  if(m.length) askInline({after:$("#printBtn"),back:$("#printBtn"),ok:"Tipărește oricum",
+    msg:missingMsg(m,"Documentul","Tipărești oricum?"),run});
+  else run();
 };
 
 /* ================================================================
@@ -2670,10 +2720,19 @@ function saveReg(){ store.set(K.reg,reg); renderReg(); if(typeof renderCmp==="fu
 
 $("#regAddBtn").onclick=()=>{
   const m=missingList();
-  if(m.length && !confirm("Documentul are încă câmpuri necompletate ("+m.join(", ")+"). Îl treci totuși în registru?")) return;
+  if(m.length){ askInline({after:$("#regAddBtn"),back:$("#regAddBtn"),ok:"Treci totuși în registru",
+    msg:missingMsg(m,"Documentul","Îl treci totuși în registru?"),run:regAddDupCheck}); return; }
+  regAddDupCheck();
+};
+function regAddDupCheck(){
+  const text=cleanText(buildText()), today=isoD(new Date());
+  if(reg.some(e=>e.d===today && e.text===text)){ askInline({after:$("#regAddBtn"),back:$("#regAddBtn"),ok:"Adaugă din nou",
+    msg:"Acest document e deja în registru cu data de azi. Îl adaugi din nou?",run:regAddNow}); return; }
+  regAddNow();
+}
+function regAddNow(){
   const text=cleanText(buildText()), subj=subject();
   const today=isoD(new Date());
-  if(reg.some(e=>e.d===today && e.text===text) && !confirm("Acest document e deja în registru cu data de azi. Îl adaugi din nou?")) return;
   const T=activeTpl();
   const e={
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
@@ -3035,10 +3094,10 @@ function renderReg(){
       if(e.items.length && e.it.length===e.items.length && e.it.every(x=>x==="da") && e.status!=="inchis") e.status="raspuns";
       store.set(K.reg,reg); renderRegSoon();
     }));
-    card.querySelector('[data-act="del"]').onclick=()=>{
-      if(!confirm("Ștergi această intrare din registru? Acțiunea nu poate fi anulată.")) return;
-      reg=reg.filter(x=>x.id!==id); saveReg();
-    };
+    const delBtn=card.querySelector('[data-act="del"]');
+    delBtn.onclick=()=>askInline({after:delBtn,back:delBtn,ok:"Șterge intrarea",
+      msg:"Ștergi această intrare din registru? Acțiunea nu poate fi anulată.",
+      run:()=>{ reg=reg.filter(x=>x.id!==id); saveReg(); }});
   });
   if(typeof renderNotifBox==="function") renderNotifBox();
   if(typeof syncNotificari==="function") syncNotificari();
@@ -3407,11 +3466,11 @@ $("#dosarPrint")?.addEventListener("click",()=>{
 $("#dosarClose")?.addEventListener("click",()=>{ $("#dosarSection").hidden=true; dosarId=null; });
 $("#dosarCopy")?.addEventListener("click",async()=>{
   const t=dosarText(); if(!t) return;
-  try{ await navigator.clipboard.writeText(t); toast("Dosarul a fost copiat ca text"); }
+  try{ await navigator.clipboard.writeText(t); flashCopied($("#dosarCopy"),"✓ Copiat în clipboard!"); }
   catch(_){
     const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
     document.body.appendChild(ta); ta.select();
-    try{ document.execCommand("copy"); toast("Dosarul a fost copiat ca text"); }catch(__){ toast("Copierea a eșuat"); }
+    try{ document.execCommand("copy"); flashCopied($("#dosarCopy"),"✓ Copiat în clipboard!"); }catch(__){ toast("Copierea a eșuat"); }
     ta.remove();
   }
 });
@@ -3493,25 +3552,35 @@ $("#plGen").onclick=()=>{
 };
 $("#plCopy").onclick=async()=>{
   const t=cleanText(buildPl(true));
-  try{ await navigator.clipboard.writeText(t); toast("Textul plângerii a fost copiat"); }
+  try{ await navigator.clipboard.writeText(t); flashCopied($("#plCopy"),"✓ Copiat în clipboard!"); }
   catch(_){
     const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
     document.body.appendChild(ta); ta.select();
-    try{ document.execCommand("copy"); toast("Textul plângerii a fost copiat"); }catch(__){ toast("Copierea a eșuat; selectează textul manual"); }
+    try{ document.execCommand("copy"); flashCopied($("#plCopy"),"✓ Copiat în clipboard!"); }catch(__){ toast("Copierea a eșuat; selectează textul manual"); }
     ta.remove();
   }
 };
 $("#plPrint").onclick=()=>{
   const e=reg.find(x=>x.id===plId); if(!e) return;
   const m=plMissing(e,plCollect());
-  if(m.length && !confirm("Plângerea are încă câmpuri necompletate ("+m.join(", ")+"). Tipărești oricum?")) return;
-  setPrintHost("h7");
-  window.print();
+  const run=()=>{ setPrintHost("h7"); window.print(); };
+  if(m.length) askInline({after:$("#plPrint"),back:$("#plPrint"),ok:"Tipărește oricum",
+    msg:missingMsg(m,"Plângerea","Tipărești oricum?"),run});
+  else run();
 };
 $("#plReg").onclick=()=>{
   const e=reg.find(x=>x.id===plId); if(!e) return;
+  const today=isoD(new Date());
+  if(reg.some(x=>x.doc==="plangere" && x.parent===e.id && x.d===today)){
+    askInline({after:$("#plReg"),back:$("#plReg"),ok:"Adaugă din nou",
+      msg:"O plângere pentru această cerere e deja în registru cu data de azi. O adaugi din nou?",run:plRegNow});
+    return;
+  }
+  plRegNow();
+};
+function plRegNow(){
+  const e=reg.find(x=>x.id===plId); if(!e) return;
   const v=plCollect(), text=cleanText(buildPl(false)), today=isoD(new Date());
-  if(reg.some(x=>x.doc==="plangere" && x.parent===e.id && x.d===today) && !confirm("O plângere pentru această cerere e deja în registru cu data de azi. O adaugi din nou?")) return;
   reg.push({
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     d: today, kind: e.kind, jud: e.jud, n: e.n, inst: e.inst, aut: e.aut, email: e.email,
@@ -3854,21 +3923,29 @@ $("#allImportFile").addEventListener("change",ev=>{
     try{
       const d=JSON.parse(r.result);
       if(!d || d.tip!=="copie-completa" || typeof d.chei!=="object") throw 0;
-      if(!confirm("Restaurarea înlocuiește datele actuale din aplicație cu cele din copie. Continui?")) return;
-      allKeys().forEach(k=>store.del(k));
-      Object.entries(d.chei).forEach(([k,v])=>{ if(k.startsWith("c544_")) store.set(k,v); });
-      toast("Datele au fost restaurate"); setTimeout(()=>location.reload(),700);
+      askInline({after:$("#allImportBtn"),back:$("#allImportBtn"),ok:"Restaurează",
+        msg:"Restaurarea înlocuiește datele actuale din aplicație cu cele din copie. Continui?",
+        run:()=>{
+          allKeys().forEach(k=>store.del(k));
+          Object.entries(d.chei).forEach(([k,v])=>{ if(k.startsWith("c544_")) store.set(k,v); });
+          toast("Datele au fost restaurate"); setTimeout(()=>location.reload(),700);
+        },
+        cancel:()=>{ ev.target.value=""; }});
+      return;
     }catch(e){ toast("Fișierul nu este o copie completă Petent"); }
     ev.target.value="";
   };
   r.readAsText(f);
 });
-$("#allClear").onclick=()=>{
-  if(!confirm("Ștergi TOATE datele din aplicație de pe acest dispozitiv: datele tale, semnătura, registrul, adresele corectate și setările?")) return;
-  if(!confirm("Ești sigur? Acțiunea nu poate fi anulată. Dacă vrei să le păstrezi, apasă „Anulează” și salvează întâi o copie.")) return;
-  try{ if(window.PetentAndroid && window.PetentAndroid.clearTermene) window.PetentAndroid.clearTermene(); }catch(_){}
-  allKeys().forEach(k=>store.del(k)); toast("Toate datele au fost șterse"); setTimeout(()=>location.reload(),700);
-};
+/* Două etape inline: prima descrie ce se șterge, a doua cere confirmarea finală */
+$("#allClear").onclick=()=>askInline({after:$("#allClear"),back:$("#allClear"),ok:"Mai departe",
+  msg:"Ștergi TOATE datele din aplicație de pe acest dispozitiv: datele tale, semnătura, registrul, adresele corectate și setările?",
+  run:()=>askInline({after:$("#allClear"),back:$("#allClear"),ok:"Șterge definitiv",
+    msg:"Ești sigur? Acțiunea nu poate fi anulată. Dacă vrei să le păstrezi, apasă „Renunță” și salvează întâi o copie.",
+    run:()=>{
+      try{ if(window.PetentAndroid && window.PetentAndroid.clearTermene) window.PetentAndroid.clearTermene(); }catch(_){}
+      allKeys().forEach(k=>store.del(k)); toast("Toate datele au fost șterse"); setTimeout(()=>location.reload(),700);
+    }})});
 /* ================================================================
    12. TEMĂ (auto / luminos / întunecat)
    ================================================================ */
