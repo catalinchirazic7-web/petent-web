@@ -1798,7 +1798,7 @@ Object.assign(TPL, {
     per:true, perLabel:"Data înregistrării cererii inițiale", perOut:"Data înregistrării cererii inițiale",
     detLabel:"Referința dosarului (număr și dată, din cererea inițială)", detOut:"Referința dosarului",
     baza:"în temeiul Legii nr. 50/1991 privind autorizarea executării lucrărilor de construcții, vă solicit să îmi comunicați stadiul cererii mele de certificat de urbanism, identificată mai jos:",
-    temei:"Potrivit art. 6 alin. (2) din Legea nr. 50/1991, certificatul de urbanism se eliberează solicitantului în termenul prevăzut de această dispoziție, calculat de la data înregistrării cererii.",
+    temei:"Potrivit art. 6 alin. (2) din Legea nr. 50/1991 republicată, cu modificările și completările ulterioare, certificatul de urbanism se eliberează solicitantului în termenul legal de maximum 15 zile lucrătoare de la data înregistrării cererii.",
     solicit: loc=>[
       `eliberarea certificatului de urbanism pentru imobilul indicat (${loc}), în termenul legal;`,
       `dacă lipsesc documente sau sunt necesare completări, comunicarea scrisă și motivată a acestora;`,
@@ -2802,7 +2802,14 @@ function regDays(e){
   if(e.doc==="petitie") return e.status==="prelungit" ? 45 : 30;
   return e.status==="prelungit" ? 30 : 10;
 }
-function regTermen(e){ const d=parseD(e.d), n=regDays(e); return d&&n ? termenLucr(addDays(d,n)) : null; }
+/* Șabloane cu termen în zile lucrătoare: certificatul de urbanism are maximum 15 zile lucrătoare de la înregistrare */
+const LUCR_TPL = {u_cert_urbanism:15};
+function addLucratoare(d,n){ let x=new Date(d), k=0; while(k<n){ x=addDays(x,1); if(!motivNelucr(x)) k++; } return x; }
+function regTermen(e){
+  const d=parseD(e.d);
+  if(d && e.doc==="petitie" && LUCR_TPL[e.tpl]) return termenLucr(addLucratoare(d,LUCR_TPL[e.tpl]));
+  const n=regDays(e); return d&&n ? termenLucr(addDays(d,n)) : null;
+}
 function regDeadline(e){ const t=regTermen(e); return t ? t.date : null; }
 const regClosed = e => e.status==="raspuns" || e.status==="inchis";
 function regBadge(e){
