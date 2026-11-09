@@ -131,10 +131,18 @@ button.btn:active:not(:disabled){transform:translateY(0)}
 /* „✓ Copiat” după copiere: fundal verde-petrol, text alb; contrastul e măsurat, nu presupus */
 button.btn.copied{background:#0F6B5E;border-color:#0F6B5E;color:#FFFFFF}
 /* Confirmare inline (înlocuiește dialogurile native) */
-.ask-inline{flex-basis:100%;margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--accent);
-  border-radius:var(--radius-sm);background:var(--accent-soft);color:var(--ink);animation:askIn .2s ease}
+.ask-inline{flex-basis:100%;max-width:100%;box-sizing:border-box;margin-top:8px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--accent);
+  border-radius:var(--radius-sm);background:var(--accent-soft);color:var(--ink);animation:askIn .2s ease;overflow-wrap:anywhere}
 .ask-inline p{margin:0 0 10px;font-size:.95rem}
-.ask-actions{display:flex;flex-wrap:wrap;gap:8px}
+.ask-actions{display:flex;flex-wrap:wrap;gap:8px;max-width:100%}
+.ask-actions .btn{max-width:100%;box-sizing:border-box}
+.draft-tools{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;max-width:100%}
+#draftEdit{margin:8px 0}
+#draftEdit textarea{width:100%;box-sizing:border-box;max-width:100%;font:inherit}
+@media (max-width:480px){
+  .ask-actions{flex-direction:column;align-items:stretch}
+  .ask-actions .btn{width:100%}
+}
 @keyframes askIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){
   button.btn,button.btn:hover,button.btn:active,.ask-inline{transition:none!important;animation:none!important;transform:none!important}
@@ -548,6 +556,16 @@ cheile = codul auto al județului (AB, AR, ... B)</pre>
   <div class="paper-wrap"><div class="paper" id="preview" role="document" aria-label="Previzualizarea documentului"></div>
     <div class="sig-prev" id="sigPreview" hidden><span>Semnătura:</span><img id="sigImg" alt="Semnătura ta"></div>
     <div class="sig-table-wrap" id="sigTableWrap" hidden></div></div>
+  <div class="draft-tools">
+    <button class="btn small" type="button" id="draftEditBtn" aria-expanded="false" aria-controls="draftEdit">Editează textul</button>
+    <button class="btn small" type="button" id="draftResetBtn" hidden>Resetează la textul din șablon</button>
+  </div>
+  <p class="hint" id="draftNote" hidden></p>
+  <p class="hint" id="draftSaved" aria-live="polite"></p>
+  <div id="draftEdit" hidden>
+    <label for="draftText">Textul tău. Se salvează automat pe acest dispozitiv, pe măsură ce scrii. Parantezele drepte [așa] marchează ce mai trebuie completat.</label>
+    <textarea id="draftText" style="min-height:260px" spellcheck="true"></textarea>
+  </div>
 
   <div class="anexe">
     <label for="anexeBtn" style="margin-top:0">Anexe <span class="opt">(opțional: răspunsuri primite, fotografii, documente)</span></label>
@@ -1774,6 +1792,10 @@ const store = {
   del(k){try{localStorage.removeItem(k)}catch(e){}}
 };
 const K = {petent:"c544_petent", sel:"c544_sel", ovr:"c544_email_override", db:"c544_uat_import", tpl:"c544_tpl", theme:"c544_theme", recl:"c544_recl"};
+/* Text editat manual: o singură ciornă, legată de șablonul și modul (cerere / reclamație) în care a fost scrisă */
+const K_DRAFT = "c544_draft_custom";
+let draft = store.get(K_DRAFT, null);
+if(!draft || typeof draft.text!=="string" || typeof draft.key!=="string") draft = null;
 
 let petent  = store.get(K.petent,{nume:"",gen:"m",adresa:"",tel:"",email:""});
 let sel     = store.get(K.sel,{jud:"TM",n:"",autoritate:"",email:""});
@@ -2452,7 +2474,12 @@ function colectivize(t){
     .map((c,i)=>`${i+1}. ${c.nume.trim()}, cu domiciliul în ${(c.adresa||"").trim()||"⟦adresa⟧"}`).join("\n");
   return t+"\n\nLista petenților:\n"+lista+(blankRows()?"\n(Lista completă a petenților, cu semnăturile acestora, se află în tabelul de semnături anexat.)":"");
 }
-function buildText(){ return colectivize(withAnexe(buildTextInner())); }
+/* Textul generat din câmpuri, fără ciornă */
+function generatedText(){ return colectivize(withAnexe(buildTextInner())); }
+/* Dacă există o ciornă pentru documentul curent, aceasta înlocuiește textul generat în toate acțiunile */
+function draftKey(){ return (recl.mode==="recl"?"recl":"doc")+"|"+tplSt.id; }
+function draftOn(){ return !!draft && draft.key===draftKey(); }
+function buildText(){ return draftOn() ? draft.text : generatedText(); }
 function buildTextInner(){
   if(recl.mode==="recl") return buildRecl();
   const T=activeTpl();
@@ -2543,12 +2570,54 @@ function missingList(){
   }
   return m;
 }
+/* ================================================================
+   TEXT EDITAT MANUAL: ciorna se salvează pe acest dispozitiv, cu debounce la tastare
+   ================================================================ */
+let draftTimer=null, draftRenderTimer=null, draftSavedTimer=null;
+const genClean = () => generatedText().replace(/⟦([^⟧]*)⟧/g,"[$1]");
+function renderDraftUi(){
+  const on=draftOn();
+  $("#draftResetBtn").hidden=!on;
+  $("#draftNote").hidden=!on;
+  $("#draftNote").textContent = on ? "Textul e editat manual: schimbările din câmpuri nu mai apar în el până nu resetezi la șablon." : "";
+  if(!$("#draftEdit").hidden && !on) $("#draftText").value=genClean();
+}
+function draftSavedNote(msg){
+  $("#draftSaved").textContent=msg;
+  clearTimeout(draftSavedTimer);
+  draftSavedTimer=setTimeout(()=>{ $("#draftSaved").textContent=""; },2500);
+}
+$("#draftEditBtn").onclick=()=>{
+  const ed=$("#draftEdit"), opening=ed.hidden;
+  if(opening) $("#draftText").value = draftOn() ? draft.text : genClean();
+  ed.hidden=!opening;
+  $("#draftEditBtn").setAttribute("aria-expanded",String(opening));
+  $("#draftEditBtn").textContent = opening ? "Închide editorul" : "Editează textul";
+  if(opening) $("#draftText").focus();
+};
+$("#draftText").addEventListener("input",e=>{
+  draft={key:draftKey(), text:e.target.value, savedAt:Date.now()};
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(()=>{ store.set(K_DRAFT,draft); draftSavedNote("Salvat pe acest dispozitiv."); },400);
+  clearTimeout(draftRenderTimer);
+  draftRenderTimer=setTimeout(render,150);
+});
+$("#draftResetBtn").onclick=()=>askInline({after:$("#draftResetBtn"),back:$("#draftResetBtn"),ok:"Resetează",
+  msg:"Textul tău editat se șterge și revine textul generat din șablon. Continui?",
+  run:()=>{
+    draft=null; clearTimeout(draftTimer); store.del(K_DRAFT);
+    $("#draftText").value=""; $("#draftEdit").hidden=true;
+    $("#draftEditBtn").setAttribute("aria-expanded","false"); $("#draftEditBtn").textContent="Editează textul";
+    render(); toast("Textul a revenit la varianta din șablon");
+  }});
+
 function render(){
   if(typeof renderPickNote==="function") renderPickNote();
   renderEmailTypo();
   setTimeout(()=>{ renderSig(); renderSigTable(); },0);
   const txt=buildText();
   $("#preview").innerHTML=esc(txt).replace(/⟦([^⟧]*)⟧/g,'<span class="ph">[$1]</span>');
+  renderDraftUi();
   const m=missingList();
   $("#missing").textContent = m.length ? "Mai lipsește: "+m.join(", ")+"." : "";
   $("#mailBtn").disabled=$("#gmailBtn").disabled=m.length>0;
