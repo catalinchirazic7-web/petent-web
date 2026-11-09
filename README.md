@@ -2,7 +2,7 @@
 
 Aplicație web care te ajută să scrii cereri, sesizări și plângeri către autoritățile din România.
 
-**Deschide aplicația:** *(link-ul GitHub Pages se completează după publicare)*
+**Deschide aplicația:** https://catalinchirazic7-web.github.io/petent-web/
 
 ## Ce face
 
