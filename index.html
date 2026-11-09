@@ -1781,6 +1781,30 @@ Object.assign(CTRL_TPL, {
   cj_dgaspc_copii: { inst:"cj", kind:"544", t:"Cerere 544: copiii din sistemul de protecție (DGASPC)", kw:"orfelinat plasament asistent maternal centre copii", obiect:"protecția copilului", per:true, perLabel:"Perioada vizată", defPer:"anului anterior", hint:"Direcția generală de asistență socială și protecția copilului (DGASPC) este subordonată consiliului județean. Poți trimite cererea și direct DGASPC.", items:(p,det,loc)=>[`numărul copiilor aflați în sistemul de protecție specială al județului la data răspunsului, defalcat pe servicii rezidențiale (centre, case de tip familial), asistenți maternali și plasament la familie sau rude;`,`numărul asistenților maternali profesioniști angajați și numărul posturilor vacante;`,`numărul copiilor reintegrați în familie sau adoptați în perioada ${p};`,`costul mediu lunar pentru un copil, pe fiecare tip de serviciu, și rezultatul ultimelor controale ale instituțiilor de inspecție socială la centrele de copii.`] },
   cj_patj: { inst:"cj", kind:"544", t:"Cerere 544: planul de amenajare a teritoriului județean (PATJ)", kw:"patj amenajarea teritoriului plan judet", obiect:"planul de amenajare a teritoriului județean", per:false, items:(p,det,loc)=>[`data aprobării planului de amenajare a teritoriului județean în vigoare și hotărârea consiliului județean de aprobare;`,`stadiul reactualizării acestuia, potrivit Legii nr. 350/2001, cu contractul de elaborare (elaborator persoană juridică, valoare, termen);`,`adresa la care planul poate fi consultat, inclusiv online;`,`lista unităților administrativ-teritoriale din județ cărora consiliul județean le-a cerut, în ultimii 3 ani, elaborarea sau actualizarea unor documentații de urbanism.`] }
 });
+/* ---- Două șabloane noi (petiție generală, certificat de urbanism) ---- */
+Object.assign(TPL, {
+  u_petitie_generala: { kind:"petitie", t:"Petiție generală: problemă edilitară sau sesizare către primar", g:"Servicii publice",
+    kw:"petitie sesizare primar consiliu politia locala edilitar strada gunoi lumina", obiect:"problema edilitară semnalată",
+    loc:true, locLabel:"Locul problemei (adresă, reper, stradă)", per:true, perLabel:"Data sau perioada constatării",
+    detLabel:"Ce ai constatat (câte un aspect pe rând)", locOut:"Locul", perOut:"Data constatării", detOut:"Descrierea situației",
+    solicit: loc=>[
+      `verificarea în teren a aspectelor semnalate (${loc}) și luarea măsurilor de remediere, potrivit competențelor;`,
+      `comunicarea în scris a măsurilor luate sau a motivelor pentru care nu pot fi luate;`,
+      `comunicarea numărului de înregistrare a prezentei petiții și a răspunsului în format electronic, la adresa de e-mail indicată mai sus.`
+    ] },
+  u_cert_urbanism: { kind:"petitie", t:"Cerere: stadiul sau emiterea certificatului de urbanism", g:"Urbanism și domeniu public",
+    kw:"certificat urbanism dosar stadiu cerere intarziere", obiect:"certificatul de urbanism", antet:"CERERE",
+    loc:true, locLabel:"Imobilul (adresă, număr cadastral)", locOut:"Imobilul",
+    per:true, perLabel:"Data înregistrării cererii inițiale", perOut:"Data înregistrării cererii inițiale",
+    detLabel:"Referința dosarului (număr și dată, din cererea inițială)", detOut:"Referința dosarului",
+    baza:"în temeiul Legii nr. 50/1991 privind autorizarea executării lucrărilor de construcții, vă solicit să îmi comunicați stadiul cererii mele de certificat de urbanism, identificată mai jos:",
+    temei:"Potrivit art. 6 alin. (2) din Legea nr. 50/1991, certificatul de urbanism se eliberează solicitantului în termenul prevăzut de această dispoziție, calculat de la data înregistrării cererii.",
+    solicit: loc=>[
+      `eliberarea certificatului de urbanism pentru imobilul indicat (${loc}), în termenul legal;`,
+      `dacă lipsesc documente sau sunt necesare completări, comunicarea scrisă și motivată a acestora;`,
+      `comunicarea numărului de înregistrare și a răspunsului în format electronic, la adresa de e-mail indicată mai sus.`
+    ] }
+});
 const ALL_TPL = Object.assign({}, TPL, CTRL_TPL);
 
 /* ================================================================
@@ -2201,11 +2225,15 @@ for(const [id,key] of Object.entries(PF)){
   el.addEventListener(el.tagName==="SELECT"?"change":"input",()=>{petent[key]=el.value.trim?el.value.trim():el.value;store.set(K.petent,petent);render()});
 }
 $("#clearPetent").onclick=()=>askInline({after:$("#clearPetent"),back:$("#clearPetent"),ok:"Șterge datele",
-  msg:"Ștergi numele, adresa, telefonul și e-mailul salvate pe acest dispozitiv?",
+  msg:"Ștergi numele, adresa, telefonul, e-mailul și textul editat manual (ciorna) salvate pe acest dispozitiv?",
   run:()=>{
     petent={nume:"",gen:"m",adresa:"",tel:"",email:""};store.del(K.petent);
+    // Ciorna conține de regulă date personale scrise în text: se șterge și ea, nu doar câmpurile
+    draft=null; clearTimeout(draftTimer); store.del(K_DRAFT);
+    $("#draftText").value=""; $("#draftEdit").hidden=true;
+    $("#draftEditBtn").setAttribute("aria-expanded","false"); $("#draftEditBtn").textContent="Editează textul";
     for(const [id,key] of Object.entries(PF)) $("#"+id).value=petent[key];
-    render();toast("Datele tale au fost șterse de pe dispozitiv");
+    render();toast("Datele tale și ciorna au fost șterse de pe dispozitiv");
   }});
 
 /* ================================================================
@@ -2290,15 +2318,16 @@ function buildPetitie(){
   const loc=tplLoc();
   const per=(tplSt.perioada[tplSt.id]||"").trim();
   const det=(tplSt.detalii[tplSt.id]||"").split("\n").map(s=>s.trim()).filter(Boolean);
-  const sol=T.solicit(loc).concat([`comunicarea în scris, la adresa de e-mail ${P.email||ph("e-mail")}, a modului de soluționare a prezentei sesizări și a măsurilor dispuse, în termenul de 30 de zile prevăzut de art. 8 din O.G. nr. 27/2002.`]);
+  // Șabloanele cu temei propriu (ex. certificatul de urbanism) nu primesc formularea din O.G. 27/2002
+  const sol=T.solicit(loc).concat(T.baza ? [] : [`comunicarea în scris, la adresa de e-mail ${P.email||ph("e-mail")}, a modului de soluționare a prezentei sesizări și a măsurilor dispuse, în termenul de 30 de zile prevăzut de art. 8 din O.G. nr. 27/2002.`]);
   const out=[
 `Către: ${aut}
 În atenția: compartimentului de relații cu publicul / registraturii`,
 ``,
-`SESIZARE
+`${T.antet||"SESIZARE"}
 privind ${T.obiect}`,
 ``,
-`${identLine()}, în temeiul O.G. nr. 27/2002 privind reglementarea activității de soluționare a petițiilor, aprobată cu modificări prin Legea nr. 233/2002, vă aduc la cunoștință următoarea situație, pe care o consider de competența instituției dumneavoastră:`,
+`${identLine()}, ${T.baza||"în temeiul O.G. nr. 27/2002 privind reglementarea activității de soluționare a petițiilor, aprobată cu modificări prin Legea nr. 233/2002, vă aduc la cunoștință următoarea situație, pe care o consider de competența instituției dumneavoastră:"}`,
 ``,
 `${T.locOut||"Locul"}: ${loc}`,
 ...(T.perOpt && !per ? [] : [`${T.perOut||"Data sau perioada constatării"}: ${per||ph("data constatării")}`]),
