@@ -2641,6 +2641,11 @@ $("#draftResetBtn").onclick=()=>askInline({after:$("#draftResetBtn"),back:$("#dr
   }});
 
 function render(){
+  // Reclamația administrativă din aplicație urmărește cererile 544 (art. 21 din Legea 544/2001): pe sesizări nu se aplică
+  if(recl.mode==="recl" && activeTpl().kind==="petitie"){
+    recl.mode="cerere"; store.set(K.recl,recl); applyReclUi();
+    toast("Reclamația administrativă se face doar pentru cererile 544. Documentul a revenit la cerere.");
+  }
   if(typeof renderPickNote==="function") renderPickNote();
   renderEmailTypo();
   setTimeout(()=>{ renderSig(); renderSigTable(); },0);
