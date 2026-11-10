@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Teste Petent — termene legale</title>
+<style>
+  :root{color-scheme:light dark}
+  body{font:15px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;max-width:960px;margin:0 auto;padding:24px 18px 60px;background:#fbf8f1;color:#24221d}
+  @media (prefers-color-scheme:dark){body{background:#15171c;color:#ece9e2}}
+  h1{font-size:22px;margin:0 0 6px}
+  p.lead{color:#6b6457;margin:0 0 18px}
+  @media (prefers-color-scheme:dark){p.lead{color:#a7a196}}
+  .bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:0 0 18px}
+  button{font:inherit;padding:8px 14px;border-radius:10px;border:1px solid #c9bfa9;background:#fffdf7;color:inherit;cursor:pointer}
+  button:hover{border-color:#0f766e}
+  #sum{font-weight:700;padding:8px 12px;border-radius:10px;background:#e4f3ef;color:#0b5d56}
+  #sum.bad{background:#fcebe4;color:#9b3a20}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:7px 9px;border-bottom:1px solid #e2d9c6;vertical-align:top}
+  th{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b6457}
+  tr.fail td{background:rgba(200,60,30,.09)}
+  .ok{color:#1c7a57;font-weight:700}
+  .no{color:#b0492a;font-weight:700}
+  code{font:12px/1.4 ui-monospace,Consolas,monospace;word-break:break-all;color:#5a5346}
+  .grp{font-weight:700;color:#0f766e;padding-top:14px}
+  .hint{font-size:12px;color:#6b6457;margin-top:20px}
+  #frame{position:absolute;width:2px;height:2px;opacity:0;pointer-events:none;border:0}
+</style>
+</head>
+<body>
+<h1>Teste pentru termenele legale</h1>
+<p class="lead">Rulează pe codul <strong>real</strong> din <code>index.html</code>, într-un iframe ascuns — fără copii ale funcțiilor, fără cont, fără rețea. Nu modifică datele tale.</p>
+<div class="bar">
+  <button type="button" id="run">Rulează din nou</button>
+  <span id="sum">Se încarcă aplicația…</span>
+  <label><input type="checkbox" id="onlyFail"> arată doar eșecurile</label>
+</div>
+<table>
+  <thead><tr><th style="width:70px">Rezultat</th><th>Test</th><th style="width:34%">Așteptat / obținut</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table>
+<p class="hint">Datele cunoscute folosite: sărbătorile legale fixe, Paștele ortodox 2024–2026 (12 aprilie 2026), Vinerea Mare, Rusaliile, zilele nelucrătoare și termenele Legea 544/2001. Dacă un test pică după o modificare a calendarului de sărbători, verifică întâi legea în vigoare, apoi codul.</p>
+<iframe id="frame" src="index.html?teste=1" title="Aplicația Petent, încărcată pentru teste"></iframe>
+
+<script>
+"use strict";
+/* Fiecare test: [grup, nume, expresie evaluată în index.html, valoare așteptată].
+   Expresiile întorc DOAR primitive, ca rezultatul să fie comparabil simplu. */
+var M544 = '{d:"2026-11-09",doc:"544",status:"asteapta",aut:"Instituția X",tplT:"Cerere",items:[],it:[]}';
+var T = [
+  ["Date", "isoD(08.11.2026)", 'isoD(new Date(2026,10,8))', "2026-11-08"],
+  ["Date", "parseD → isoD rotund", 'isoD(parseD("2026-11-08"))', "2026-11-08"],
+  ["Date", "parseD acceptă doar ISO", 'parseD("08.11.2026")===null', true],
+  ["Date", "parseD normalizează luna 13", 'isoD(parseD("2026-13-01"))', "2027-01-01"],
+  ["Date", "addDays trece anul", 'isoD(addDays(new Date(2026,11,31),1))', "2027-01-01"],
+  ["Date", "addDays ține anul bisect 2028", 'isoD(addDays(new Date(2028,1,28),1))', "2028-02-29"],
+  ["Date", "fmtDate", 'fmtDate(new Date(2026,10,8))', "08.11.2026"],
+  ["Date", "startOfDay taie orele", 'startOfDay(new Date(2026,10,8,17,45)).getHours()', 0],
+
+  ["Sărbători fixe", "1 ianuarie", 'sarbatoare(new Date(2026,0,1))', "Anul Nou"],
+  ["Sărbători fixe", "2 ianuarie", 'sarbatoare(new Date(2026,0,2))', "a doua zi de Anul Nou"],
+  ["Sărbători fixe", "6 ianuarie", 'sarbatoare(new Date(2026,0,6))', "Boboteaza"],
+  ["Sărbători fixe", "7 ianuarie", 'sarbatoare(new Date(2026,0,7))', "Sf. Ioan Botezătorul"],
+  ["Sărbători fixe", "24 ianuarie", 'sarbatoare(new Date(2026,0,24))', "Ziua Unirii Principatelor Române"],
+  ["Sărbători fixe", "1 mai", 'sarbatoare(new Date(2026,4,1))', "Ziua Muncii"],
+  ["Sărbători fixe", "1 iunie", 'sarbatoare(new Date(2026,5,1))', "Ziua Copilului"],
+  ["Sărbători fixe", "15 august", 'sarbatoare(new Date(2026,7,15))', "Adormirea Maicii Domnului"],
+  ["Sărbători fixe", "30 noiembrie", 'sarbatoare(new Date(2026,10,30))', "Sf. Andrei"],
+  ["Sărbători fixe", "1 decembrie", 'sarbatoare(new Date(2026,11,1))', "Ziua Națională"],
+  ["Sărbători fixe", "25 decembrie", 'sarbatoare(new Date(2026,11,25))', "Crăciunul"],
+  ["Sărbători fixe", "26 decembrie", 'sarbatoare(new Date(2026,11,26))', "a doua zi de Crăciun"],
+  ["Sărbători fixe", "zi obișnuită = gol", 'sarbatoare(new Date(2026,2,3))', ""],
+
+  ["Paște ortodox", "Paștele 2024", 'isoD(pasteOrtodox(2024))', "2024-05-05"],
+  ["Paște ortodox", "Paștele 2025", 'isoD(pasteOrtodox(2025))', "2025-04-20"],
+  ["Paște ortodox", "Paștele 2026", 'isoD(pasteOrtodox(2026))', "2026-04-12"],
+  ["Paște ortodox", "Vinerea Mare 2026", 'sarbatoare(new Date(2026,3,10))', "Vinerea Mare"],
+  ["Paște ortodox", "Paștele 2026 e sărbătoare", 'sarbatoare(new Date(2026,3,12))', "Paștele"],
+  ["Paște ortodox", "a doua zi de Paște", 'sarbatoare(new Date(2026,3,13))', "a doua zi de Paște"],
+  ["Paște ortodox", "Rusaliile 2026", 'sarbatoare(new Date(2026,4,31))', "Rusaliile"],
+  ["Paște ortodox", "sărbătoarea fixă are prioritate", 'sarbatoare(new Date(2026,5,1))', "Ziua Copilului"],
+
+  ["Zile lucrătoare", "sâmbăta e nelucrătoare", 'motivNelucr(new Date(2026,10,7))', "cade sâmbătă"],
+  ["Zile lucrătoare", "duminica e nelucrătoare", 'motivNelucr(new Date(2026,10,8))', "cade duminică"],
+  ["Zile lucrătoare", "luni e lucrătoare", 'motivNelucr(new Date(2026,10,9))', ""],
+  ["Zile lucrătoare", "sâmbătă → luni", 'isoD(termenLucr(new Date(2026,10,7)).date)', "2026-11-09"],
+  ["Zile lucrătoare", "luni nu se mută", 'termenLucr(new Date(2026,10,9)).why', ""],
+  ["Zile lucrătoare", "1–2 ian + weekend → 5 ian", 'isoD(termenLucr(new Date(2026,0,1)).date)', "2026-01-05"],
+  ["Zile lucrătoare", "1 decembrie → 2 decembrie", 'isoD(termenLucr(new Date(2026,11,1)).date)', "2026-12-02"],
+  ["Zile lucrătoare", "termenLucr păstrează orig", 'isoD(termenLucr(new Date(2026,10,7)).orig)', "2026-11-07"],
+  ["Zile lucrătoare", "3 zile lucrătoare din 9 nov", 'isoD(addLucratoare(new Date(2026,10,9),3))', "2026-11-12"],
+
+  ["Ultima zi sigură", "e marcată sigură", 'termenSigur(new Date(2026,10,7),new Date(2026,10,10)).sigur', true],
+  ["Ultima zi sigură", "data nu se mută", 'isoD(termenSigur(new Date(2026,10,7),new Date(2026,10,10)).date)', "2026-11-07"],
+  ["Ultima zi sigură", "motivul zilei", 'termenSigur(new Date(2026,10,7),new Date(2026,10,10)).motiv', "cade sâmbătă"],
+  ["Ultima zi sigură", "ultima zi lucrătoare dinainte", 'isoD(termenSigur(new Date(2026,10,7),new Date(2026,10,10)).inainte)', "2026-11-06"],
+  ["Ultima zi sigură", "zi lucrătoare nu are 'înainte'", 'termenSigur(new Date(2026,10,9),new Date(2026,10,12)).inainte===null', true],
+
+  ["Registru", "544 = 10 zile", 'regDays({doc:"544",status:"asteapta"})', 10],
+  ["Registru", "544 prelungit = 30 zile", 'regDays({doc:"544",status:"prelungit"})', 30],
+  ["Registru", "petiție = 30 zile", 'regDays({doc:"petitie",status:"asteapta"})', 30],
+  ["Registru", "petiție prelungită = 45 zile", 'regDays({doc:"petitie",status:"prelungit"})', 45],
+  ["Registru", "reclamație = 15 zile", 'regDays({doc:"recl"})', 15],
+  ["Registru", "plângere = fără termen", 'regDays({doc:"plangere"})', 0],
+  ["Registru", "termen răspuns 544 din 9 nov", 'isoD(regDeadline(' + M544 + '))', "2026-11-19"],
+  ["Registru", "4 repere pentru 544", 'regMilestones(' + M544 + ').length', 4],
+  ["Registru", "primul reper = răspuns", 'regMilestones(' + M544 + ')[0].k', "rasp"],
+  ["Registru", "al doilea = maxim 30 zile", 'regMilestones(' + M544 + ')[1].title', "Termenul maxim de răspuns (30 de zile)"],
+  ["Registru", "ultimul = plângere", 'regMilestones(' + M544 + ')[3].k', "pl"],
+  ["Registru", "fără dată → fără repere", 'regMilestones({d:"",doc:"544"}).length', 0],
+  ["Registru", "răspuns = închis", 'regClosed({status:"raspuns"})', true],
+  ["Registru", "în așteptare = deschis", 'regClosed({status:"asteapta"})', false],
+
+  ["Validări", "CNP valid", 'cnpOk("1980101200000")', true],
+  ["Validări", "CNP cu cifră de control greșită", 'cnpOk("1980101200001")', false],
+  ["Validări", "CNP prea scurt", 'cnpOk("123")', false],
+  ["Validări", "CNP cu litere", 'cnpOk("abcdefghijklm")', false],
+  ["Validări", "e-mail valid", 'emailOk("a@b.ro")', true],
+  ["Validări", "e-mail fără domeniu", 'emailOk("a@b")', false],
+  ["Validări", "escapare HTML", 'esc(\'<a "&>\')', "&lt;a &quot;&amp;&gt;"],
+  ["Validări", "normalizare diacritice", 'norm("Dudeștii Vechi")', "dudestii vechi"],
+  ["Validări", "⟦…⟧ → […]", 'cleanText("⟦nume⟧")', "[nume]"],
+
+  ["Integritate", "versiunea aplicației", 'APP_VERSION', "1.9.12"],
+  ["Integritate", "42 de județe", 'JUDETE.length', 42],
+  ["Integritate", "3.187 primării", 'Object.values(UAT_BAZA).reduce(function(s,a){return s+a.length},0)', 3187],
+  ["Integritate", "peste 200 de șabloane", 'Object.keys(ALL_TPL).length>200', true],
+  ["Integritate", "9 secțiuni", 'document.querySelectorAll("section.step").length', 9],
+  ["Integritate", "fără punte Android pe web", 'typeof PetentAndroid', "undefined"],
+  ["Integritate", "zero câmpuri de parolă", 'document.querySelectorAll("input[type=password]").length', 0],
+  ["Integritate", "zero biblioteci externe", 'document.querySelectorAll("script[src]").length', 0],
+  ["Pachet web", "manifest PWA", '!!document.querySelector(\'link[rel="manifest"]\')', true],
+  ["Pachet web", "iconiță PNG pentru iOS", 'document.querySelectorAll(\'link[rel="apple-touch-icon"][href$=".png"]\').length', 1],
+  ["Pachet web", "buton Termene", '!!document.getElementById("termBtn")', true],
+  ["Pachet web", "panou Termene", '!!document.getElementById("termPanel")', true],
+  ["Pachet web", "trimitere multi-instituții", '!!document.getElementById("multiBox")', true],
+  ["Pachet web", "buton de instalare", '!!document.getElementById("ptInstall")', true],
+  ["Pachet web", "link către această pagină de teste", '!!document.querySelector(\'footer a[href="teste.html"]\')', true]
+];
+
+var frame = document.getElementById('frame');
+var rows = document.getElementById('rows');
+var sum = document.getElementById('sum');
+var onlyFail = document.getElementById('onlyFail');
+
+function esc(s){ return String(s).replace(/[&<>"]/g, function(c){
+  return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+function run(){
+  rows.innerHTML = '';
+  var w;
+  try { w = frame.contentWindow; if (!w || !w.eval) throw new Error('iframe neîncărcat'); }
+  catch (e) { sum.textContent = 'Eroare: ' + e.message; sum.className = 'bad'; return; }
+
+  var pass = 0, fail = 0, lastGroup = '';
+  T.forEach(function (t) {
+    var actual, ok, err = '';
+    try { actual = w.eval(t[2]); ok = JSON.stringify(actual) === JSON.stringify(t[3]); }
+    catch (e) { ok = false; err = e.message; }
+    if (ok) pass++; else fail++;
+
+    if (onlyFail.checked && ok) return;
+    var tr = document.createElement('tr');
+    if (!ok) tr.className = 'fail';
+    if (t[0] !== lastGroup) {
+      lastGroup = t[0];
+      var g = document.createElement('tr');
+      g.className = 'grp-row';
+      g.innerHTML = '<td colspan="3" class="grp">' + esc(t[0]) + '</td>';
+      rows.appendChild(g);
+    }
+    tr.innerHTML = '<td class="' + (ok ? 'ok' : 'no') + '">' + (ok ? 'OK' : 'EȘEC') + '</td>' +
+      '<td>' + esc(t[1]) + '<br><code>' + esc(t[2]) + '</code></td>' +
+      '<td>' + (ok ? '<span class="ok">' + esc(JSON.stringify(t[3])) + '</span>'
+        : 'așteptat <b>' + esc(JSON.stringify(t[3])) + '</b><br>obținut <b class="no">' +
+          esc(err || JSON.stringify(actual)) + '</b>') + '</td>';
+    rows.appendChild(tr);
+  });
+  sum.textContent = pass + ' / ' + T.length + ' teste trecute' + (fail ? ' · ' + fail + ' eșecuri' : ' · totul OK');
+  sum.className = fail ? 'bad' : '';
+}
+
+document.getElementById('run').addEventListener('click', run);
+onlyFail.addEventListener('change', run);
+frame.addEventListener('load', function () { setTimeout(run, 350); });
+setTimeout(function(){ if (!rows.children.length) run(); }, 4000);
+</script>
+</body>
+</html>

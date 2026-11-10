@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Petent — cereri și sesizări către autorități",
+  "short_name": "Petent",
+  "description": "Redactează cereri și sesizări, ține registrul și termenele legale. Fără cont, fără server, fără colectare de date.",
+  "lang": "ro",
+  "dir": "ltr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F3EDDF",
+  "theme_color": "#0F766E",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    { "src": "./icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "./icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

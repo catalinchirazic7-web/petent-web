@@ -9,8 +9,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Petent — cereri și sesizări către autorități</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0F766E">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Petent">
+
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23FBF6EC'/><g transform='rotate(-6 32 32)' fill='none' stroke='%230F766E' stroke-linecap='round' stroke-linejoin='round'><rect x='13' y='9' width='38' height='46' rx='7' stroke-width='3.6'/><path d='M21 24h22M21 33h22M21 42h14' stroke-width='3.2'/></g><circle cx='51' cy='15' r='6' fill='%23E2725B'/></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23FBF6EC'/><g transform='rotate(-6 32 32)' fill='none' stroke='%230F766E' stroke-linecap='round' stroke-linejoin='round'><rect x='13' y='9' width='38' height='46' rx='7' stroke-width='3.6'/><path d='M21 24h22M21 33h22M21 42h14' stroke-width='3.2'/></g><circle cx='51' cy='15' r='6' fill='%23E2725B'/></svg>">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 /* ============================================================
    IDENTITATE VIZUALĂ — hârtie caldă, cerneală verde, accente corai
@@ -710,6 +716,155 @@ html[data-skin="mono"] .paper::before{background:#111111}
   html #skinBtn{white-space:nowrap}
 }
 
+
+/* ============================================================
+   CALENDARUL CERERII (doar web): ce ai completat + ziua depunerii
+   Foloseste exclusiv tokenii de culoare, deci tine la toate cele 4 aspecte.
+   ============================================================ */
+.cal-btn{white-space:nowrap}
+.cal-panel{position:absolute;z-index:90;width:344px;max-width:calc(100vw - 24px);
+  max-height:min(72vh,640px);overflow:auto;background:var(--panel);color:var(--ink);
+  border:1px solid var(--line);border-radius:var(--radius-lg);box-shadow:var(--sh-lg);
+  padding:14px 15px 16px;font-size:13px;line-height:1.5}
+.cal-panel[hidden]{display:none}
+.cal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.cal-head strong{font-size:14px;font-weight:800}
+.cal-close{border:1px solid var(--line);background:transparent;color:var(--ink);
+  width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;line-height:1}
+.cal-close:hover{background:var(--accent-soft)}
+.cal-sec{margin:12px 0 6px;font-size:12px;font-weight:800;letter-spacing:.02em;color:var(--muted)}
+.cal-prog{height:6px;border-radius:99px;background:var(--accent-soft);overflow:hidden;margin-bottom:8px}
+.cal-prog > i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.cal-list{display:flex;flex-direction:column;gap:2px}
+.cal-row{display:flex;align-items:center;gap:8px;padding:3px 0;cursor:pointer}
+.cal-row input{width:16px;height:16px;accent-color:var(--accent);flex:none;cursor:pointer;margin:0}
+.cal-row .cal-txt{flex:1;min-width:0}
+.cal-row .cal-who{font-size:11px;color:var(--muted);white-space:nowrap}
+.cal-row.cal-off .cal-txt{color:var(--muted)}
+.cal-nav{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:10px 0 6px}
+.cal-nav b{font-size:13px;font-weight:700}
+.cal-nav button{border:1px solid var(--line);background:transparent;color:var(--ink);
+  width:26px;height:26px;border-radius:8px;cursor:pointer;line-height:1}
+.cal-nav button:hover{background:var(--accent-soft)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal-wd{text-align:center;font-size:11px;color:var(--muted);padding:2px 0}
+.cal-day{position:relative;appearance:none;display:flex;align-items:center;justify-content:center;
+  min-height:32px;padding:0;border:1px solid transparent;border-radius:8px;background:transparent;
+  color:var(--ink);font:inherit;font-size:12px;cursor:pointer}
+.cal-day:hover{background:var(--accent-soft)}
+.cal-day:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.cal-day.cal-today{border-color:var(--accent)}
+.cal-day.cal-sel{background:var(--accent);color:var(--accent-ink)}
+.cal-day.cal-out{visibility:hidden}
+.cal-dot{position:absolute;bottom:3px;width:5px;height:5px;border-radius:50%}
+.cal-dot-dep{left:calc(50% - 7px);background:var(--accent)}
+.cal-dot-term{left:calc(50% + 2px);background:var(--warn)}
+.cal-day.cal-sel .cal-dot{background:var(--accent-ink)}
+.cal-confirm{margin-top:8px;padding:9px 10px;border:1px solid var(--accent);
+  border-radius:var(--radius-sm);background:var(--accent-soft);font-size:12px}
+.cal-confirm .cal-btns{display:flex;gap:6px;margin-top:7px}
+.cal-confirm button,.cal-reset{border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:8px;padding:5px 9px;font:inherit;font-size:12px;cursor:pointer}
+.cal-confirm button.cal-yes{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cal-next{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.cal-next li{display:flex;gap:8px;align-items:baseline;font-size:12px}
+.cal-next button{border:0;background:transparent;color:var(--ink);text-align:left;padding:0;
+  cursor:pointer;font:inherit}
+.cal-next button:hover{text-decoration:underline}
+.cal-next .cal-days{flex:none;font-weight:700;color:var(--warn)}
+.cal-hint{margin:10px 0 0;font-size:11px;color:var(--muted)}
+.cal-reset{margin-top:10px}
+@media (max-width:520px){.cal-panel{width:calc(100vw - 24px);max-height:76vh}}
+@media print{#calBtn,.cal-panel{display:none !important}}
+@media (prefers-reduced-motion:reduce){
+  .cal-panel,.cal-day,.cal-prog > i{transition:none !important;animation:none !important}
+}
+
+/* ============================================================
+   PACHET: PWA / anexe persistente / termene / multi-instituții / teste
+   Toate culorile vin din tokenii temei, deci funcționează în cele 4 aspecte.
+   ============================================================ */
+.pt-status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:16px 0 4px}
+.pt-status .btn{margin:0}
+.pt-offline,.pt-update{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:var(--radius-sm);padding:8px 12px;font-size:13px}
+.pt-offline{color:var(--warn);background:var(--warn-soft);border-color:var(--warn)}
+.pt-update{border-color:var(--accent);background:var(--accent-soft)}
+.pt-update[hidden],.pt-offline[hidden]{display:none}
+.pt-update strong{font-weight:800}
+.pt-update button{border:1px solid var(--line);background:var(--panel);color:var(--ink);
+  border-radius:8px;padding:4px 9px;font:inherit;font-size:12px;cursor:pointer}
+.pt-update button.pt-yes{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.theme-btn.pt-urgent{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+
+/* Panoul Termene folosește aceeași carcasă .cal-panel ca și Calendarul */
+.pt-sec{margin:12px 0 8px;font-size:12px;font-weight:800;letter-spacing:.02em;color:var(--muted)}
+.pt-empty,.pt-mini{font-size:12px;color:var(--muted);margin:8px 0}
+.pt-term{border:1px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;margin:0 0 8px;background:transparent}
+.pt-term-hd{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.pt-term-hd strong{font-size:13px;font-weight:800;min-width:0;overflow-wrap:anywhere}
+.pt-badge{flex:none;font-size:11px;font-weight:700;padding:2px 7px;border-radius:99px;
+  background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.pt-badge.warn{background:var(--warn-soft);color:var(--warn)}
+.pt-badge.late{background:var(--warn-soft);color:var(--warn)}
+.pt-badge.ok{background:var(--ok-soft);color:var(--ok)}
+.pt-days{font-size:12px;font-weight:700;margin-top:5px;color:var(--ink)}
+.pt-details{margin-top:6px;font-size:12px}
+.pt-details summary{cursor:pointer;color:var(--accent)}
+.pt-ms{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:3px}
+.pt-ms li{display:flex;gap:8px;align-items:baseline;color:var(--muted)}
+.pt-ms li span{flex:none;font-weight:700;color:var(--ink)}
+.pt-links{display:flex;gap:6px;margin-top:8px;flex-wrap:wrap}
+.pt-links button{border:1px solid var(--line);background:transparent;color:var(--ink);
+  border-radius:8px;padding:4px 8px;font:inherit;font-size:11px;cursor:pointer}
+.pt-links button:hover{background:var(--accent-soft)}
+
+/* Trimitere către mai multe instituții */
+.pt-multi{border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel);
+  padding:10px 12px;margin:12px 0;font-size:14px}
+.pt-multi>summary{cursor:pointer;font-weight:700}
+.pt-multi .hint{font-size:12px;color:var(--muted);margin:8px 0}
+.pt-multi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+.pt-multi label{display:block;font-size:12px;font-weight:700;margin-bottom:4px}
+.pt-multi input[type=text],.pt-multi input[type=email],.pt-multi input[type=search]{width:100%}
+.pt-res{list-style:none;margin:4px 0 10px;padding:0;max-height:190px;overflow:auto;
+  border:1px solid var(--line);border-radius:var(--radius-sm)}
+.pt-res[hidden]{display:none}
+.pt-res li{border-bottom:1px solid var(--line)}
+.pt-res li:last-child{border-bottom:0}
+.pt-res button{width:100%;text-align:left;border:0;background:transparent;color:var(--ink);
+  padding:7px 10px;font:inherit;font-size:13px;cursor:pointer}
+.pt-res button:hover{background:var(--accent-soft)}
+.pt-res small{color:var(--muted)}
+.pt-chips{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pt-chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);
+  border-radius:99px;padding:4px 6px 4px 10px;font-size:12px;background:var(--accent-soft)}
+.pt-chip span{max-width:230px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pt-chip button{border:0;background:transparent;color:var(--ink);cursor:pointer;
+  width:18px;height:18px;line-height:1;border-radius:50%;font-size:14px;padding:0}
+.pt-chip button:hover{background:var(--warn-soft);color:var(--warn)}
+.pt-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.pt-actions .btn{margin:0}
+.pt-actions .btn:disabled{opacity:.5;cursor:not-allowed}
+.pt-att-note{font-size:12px}
+#ptAttNote .notice{margin-top:8px}
+
+/* Anexele în Dosarul complet (pagini tipăribile) */
+.pt-att-page img{display:block;max-width:100%;max-height:230mm;object-fit:contain;margin:8px 0}
+.pt-att-page a{color:var(--accent);font-weight:700}
+
+@media (max-width:520px){
+  .pt-multi-grid{grid-template-columns:1fr}
+  .pt-status{flex-direction:column}
+}
+@media print{
+  #termBtn,#ptStatus,#multiBox,#ptAttNote,.pt-att-note{display:none !important}
+}
+@media (prefers-reduced-motion:reduce){
+  .pt-status,.pt-update,.pt-term,.pt-chip{transition:none !important;animation:none !important}
+}
+
 </style>
 </head>
 <body>
@@ -730,6 +885,8 @@ html[data-skin="mono"] .paper::before{background:#111111}
     </div>
     <button class="theme-btn" id="themeBtn" type="button">Temă: auto</button>
     <button class="theme-btn" id="skinBtn" type="button" aria-label="Aspect: hârtie veche de dosar. Apasă pentru următorul aspect.">Aspect: Hârtie</button>
+    <button class="theme-btn cal-btn" id="calBtn" type="button" aria-expanded="false" aria-controls="calPanel" aria-label="Calendarul cererii: vezi ce ai completat și marchează ziua depunerii">Calendar</button>
+    <button class="theme-btn" id="termBtn" type="button" aria-expanded="false" aria-controls="termPanel" aria-label="Termenele mele: vezi numărătoarea inversă și reperele legale">Termene</button>
   </div>
 </header>
 
@@ -782,6 +939,31 @@ html[data-skin="mono"] .paper::before{background:#111111}
   <div id="emailTypo"></div>
   <p class="hint" id="ctrlHint" hidden></p>
   <p class="hint" id="uatHint">Lista conține toate primăriile din țară, după baza publică geo-spatial.org. Adresele pot fi schimbate între timp. Verifică adresa pe site-ul oficial al primăriei; dacă o corectezi aici, corectura se păstrează pe acest dispozitiv.</p>
+<details class="pt-multi" id="multiBox">
+  <summary>Trimite și către alte instituții</summary>
+  <p class="hint">Când nu știi cine e competent, pregătește același document pentru mai multe instituții. Primești un pachet cu câte o cerere pentru fiecare și, dacă vrei, câte o intrare separată în registru — fiecare cu propriile termene. Nimic nu se trimite singur.</p>
+  <div class="pt-multi-grid">
+    <div>
+      <label for="multiSearch">Caută în lista de primării sau instituții</label>
+      <input type="search" id="multiSearch" placeholder="ex. Timișoara, Sector 3, Garda de Mediu" autocomplete="off">
+    </div>
+  </div>
+  <ul class="pt-res" id="multiResults" hidden></ul>
+  <div class="pt-multi-grid">
+    <div><label for="multiName">Sau scrie denumirea manual</label><input type="text" id="multiName" placeholder="ex. Primăria Comunei X"></div>
+    <div><label for="multiEmail">E-mailul instituției</label><input type="email" id="multiEmail" placeholder="contact@institutie.ro"></div>
+  </div>
+  <div class="btn-row"><button class="btn small" type="button" id="multiAdd">Adaugă instituția</button></div>
+  <div class="pt-chips" id="multiList"></div>
+  <div class="pt-actions">
+    <button class="btn small" type="button" id="multiGen">Descarcă pachetul</button>
+    <button class="btn small" type="button" id="multiPrint">Tipărește pachetul</button>
+    <button class="btn small" type="button" id="multiCopy">Copiază toate textele</button>
+    <button class="btn primary small" type="button" id="multiReg">Trece în registru</button>
+  </div>
+  <div id="multiOut"></div>
+  <p class="hint">Dacă ai editat manual textul cererii, ciorna e folosită identic pentru toate destinatarele; verifică denumirea instituției în fiecare document înainte de trimitere.</p>
+</details>
 
   <details id="uatOnly3">
     <summary>Corectează sau completează lista (import JSON)</summary>
@@ -984,6 +1166,7 @@ cheile = codul auto al județului (AB, AR, ... B)</pre>
     <ul class="anexe-list" id="anexeList"></ul>
     <div class="anexe-total" id="anexeTotal"></div>
     <div id="anexeHint"></div>
+  <div class="pt-att-note" id="ptAttNote"></div>
   </div>
 
   <div class="missing" id="missing"></div>
@@ -1157,7 +1340,16 @@ cheile = codul auto al județului (AB, AR, ... B)</pre>
 </details>
 </main>
 
-<footer><span id="appVersion"></span><br>Dezvoltat independent de Chirazic Cătălin · <a id="authorMail" href="mailto:catalinchirazic7@gmail.com">catalinchirazic7@gmail.com</a><br>Petent — instrument civic gratuit, fără înregistrare și fără colectare de date.<br>Datele de contact ale primăriilor: inițiativa voluntară geo-spatial.org, „Contact localitati”.<br>Redactarea merge fără internet; trimiterea se face din aplicația ta de e-mail. Nu folosește servere, cookie-uri sau biblioteci externe.<br>Textele sunt modele orientative și nu țin loc de consultanță juridică; verifică forma în vigoare a legii.</footer>
+<div class="pt-status" id="ptStatus">
+  <button class="btn small" type="button" id="ptInstall" hidden>Instalează aplicația pe dispozitiv</button>
+  <span class="pt-offline" id="ptOffline" hidden>Ești offline — aplicația merge în continuare, datele rămân aici.</span>
+  <div class="pt-update" id="ptUpdate" hidden>
+    <strong>O versiune nouă e gata.</strong>
+    <button type="button" class="pt-yes" data-pt-reload>Reîncarcă</button>
+    <button type="button" data-pt-dismiss>Mai târziu</button>
+  </div>
+</div>
+<footer><span id="appVersion"></span><br>Dezvoltat independent de Chirazic Cătălin · <a id="authorMail" href="mailto:catalinchirazic7@gmail.com">catalinchirazic7@gmail.com</a><br>Petent — instrument civic gratuit, fără înregistrare și fără colectare de date. · <a href="teste.html">Teste termene</a><br>Datele de contact ale primăriilor: inițiativa voluntară geo-spatial.org, „Contact localitati”.<br>Redactarea merge fără internet; trimiterea se face din aplicația ta de e-mail. Nu folosește servere, cookie-uri sau biblioteci externe.<br>Textele sunt modele orientative și nu țin loc de consultanță juridică; verifică forma în vigoare a legii.</footer>
 </div>
 
 <div class="toast" id="toast" role="status"></div>
@@ -2891,7 +3083,7 @@ fapt
 }
 
 /* Anexele sunt menționate în document, înaintea datei */
-let anexe=[];   // {file, desc} — doar în memorie, nu se salvează
+let anexe=[];   // {file, desc, id} — fișierele rămân în IndexedDB (vezi modulul de anexe)
 function withAnexe(t){
   if(!anexe.length) return t;
   const bloc="\n\nAnexez prezentei:\n"+anexe.map((a,i)=>`${i+1}. ${a.desc||a.file.name}`).join("\n");
@@ -3144,7 +3336,7 @@ function renderAnexe(){
     else if(share) msgs.push("„Trimite cu anexe” deschide lista de aplicații a telefonului: alege aplicația de e-mail. Textul și fișierele se preiau automat, dar adresa destinatarului nu poate fi completată automat pe această cale. Aplicația o copiază înainte, iar tu o lipești în câmpul „Către”. Verifică și subiectul.");
     else msgs.push("Acest browser nu poate trimite fișiere direct către aplicația de e-mail. Folosește butonul obișnuit de e-mail și atașează manual fișierele de mai sus (butonul cu agrafa). Documentul le menționează deja în lista de anexe. Pe telefon, trimiterea directă cu anexe merge de obicei doar când aplicația e deschisă de pe un site (https), nu ca fișier salvat.");
     if(total>20*1048576) msgs.push("Anexele depășesc 20 MB. Multe servere de e-mail refuză mesajele de peste 20–25 MB; trimite-le în mai multe mesaje sau micșorează fotografiile.");
-    msgs.push("Fișierele nu se salvează în aplicație: dacă reîncarci pagina, trebuie adăugate din nou. În registru se păstrează doar denumirile lor.");
+    msgs.push("Fișierele rămân pe dispozitiv și reapar după reîncărcarea paginii; registrul păstrează denumirile, iar Dosarul complet le include.");
   }
   $("#anexeHint").innerHTML = msgs.length ? `<div class="notice info">${msgs.map(m=>`<p>${esc(m)}</p>`).join("")}</div>` : "";
 }
@@ -4610,5 +4802,809 @@ setTimeout(()=>{
   apply();
 })();
 </script>
+
+<div class="cal-panel" id="calPanel" role="dialog" aria-modal="false" aria-label="Calendarul cererii" hidden>
+  <div class="cal-head"><strong>Calendarul cererii</strong><button class="cal-close" id="calClose" type="button" aria-label="Închide calendarul">×</button></div>
+  <div id="calBody"></div>
+</div>
+
+<script>
+/* Calendarul cererii — exclusiv web: DOM + localStorage, fara punte nativa, fara retea. */
+(function(){
+"use strict";
+var KEY="c544_calendar";
+var btn=document.getElementById("calBtn"), panel=document.getElementById("calPanel"),
+    body=document.getElementById("calBody"), closeBtn=document.getElementById("calClose");
+if(!btn||!panel||!body||!closeBtn) return;
+var LUNI=["ianuarie","februarie","martie","aprilie","mai","iunie","iulie","august",
+          "septembrie","octombrie","noiembrie","decembrie"];
+var ZILE=["L","M","M","J","V","S","D"];
+var today=startOfDay(new Date());
+var view=new Date(today.getFullYear(),today.getMonth(),1);
+var pending=null, state={};
+try{var raw=localStorage.getItem(KEY),p=raw?JSON.parse(raw):null;
+    if(p&&typeof p==="object"&&!Array.isArray(p)) state=p;}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+function txt(){try{return cleanText(buildText())}catch(e){return ""}}
+function docKey(){
+  var a="",sbj="",t="";
+  try{a=(sel.autoritate||sel.n||"").trim()}catch(e){}
+  try{sbj=subject()}catch(e){}
+  try{t=tplSt.id||""}catch(e){}
+  return a+"|"+sbj+"|"+t;
+}
+function bucket(){
+  var k=docKey();
+  if(!state[k]||typeof state[k]!=="object"||Array.isArray(state[k])) state[k]={};
+  return state[k];
+}
+function entry(){
+  var t=txt(),i;
+  for(i=reg.length-1;i>=0;i--) if(reg[i]&&reg[i].text===t) return reg[i];
+  var a="",sbj=""; try{a=(sel.autoritate||"").trim()}catch(e){} try{sbj=subject()}catch(e){}
+  for(i=reg.length-1;i>=0;i--) if(reg[i]&&reg[i].aut===a&&reg[i].subj===sbj) return reg[i];
+  return null;
+}
+var ITEMS=[
+ {id:"inst",   t:"Am ales instituția",          f:function(){return !!((sel.autoritate||sel.n||"").trim())}},
+ {id:"pers",   t:"Am completat datele mele",    f:function(){return !!(petent.nume&&petent.adresa)}},
+ {id:"subiect",t:"Am ales ce cer",              f:function(){try{return !!tplSt.id&&tplItems().length>0}catch(e){return false}}},
+ {id:"detalii",t:"Am completat detaliile",      f:function(){try{return !!((tplSt.loc||{})[tplSt.id]||(tplSt.detalii||{})[tplSt.id]||(tplSt.perioada||{})[tplSt.id])}catch(e){return false}}},
+ {id:"doc",    t:"Documentul e gata",           f:function(){return txt().length>200}},
+ {id:"semn",   t:"Am adăugat semnătura",        f:function(){try{var v=store.get(K.sig,"");return typeof v==="string"?v.length>60:!!(v&&Object.keys(v).length)}catch(e){return false}}},
+ {id:"anexe",  t:"Am atașat fișiere",           f:function(){return anexe.length>0}},
+ {id:"depus",  t:"Am depus cererea",            f:function(){return !!entry()}},
+ {id:"raspuns",t:"Am primit răspuns",           f:function(){var e=entry();return !!(e&&(e.rasp||e.resp||regClosed(e)))}},
+ {id:"contest",t:"Am depus reclamație / plângere",f:function(){var e=entry();return !!(e&&reg.some(function(x){return x.parent===e.id}))}}
+];
+function autoOf(it){try{return !!it.f()}catch(e){return false}}
+function values(){
+  var b=bucket(),o={},n=0;
+  ITEMS.forEach(function(it){
+    var a=autoOf(it),manual=Object.prototype.hasOwnProperty.call(b,it.id);
+    var v=manual?!!b[it.id]:a;
+    o[it.id]={auto:a,val:v,manual:manual};
+    if(v)n++;
+  });
+  return {o:o,n:n};
+}
+function toDate(x){
+  if(!x) return null;
+  if(x instanceof Date) return x;
+  if(x.date instanceof Date) return x.date;
+  if(typeof x==="string"){try{return parseD(x)}catch(e){}}
+  return null;
+}
+function marks(){
+  var out={};
+  function add(d,kind,title){
+    if(!d)return; var k=""; try{k=isoD(d)}catch(e){return}
+    var o=out[k]||(out[k]={dep:false,terms:[]});
+    if(kind==="dep")o.dep=true; else o.terms.push(title);
+  }
+  reg.forEach(function(e){
+    if(!e)return;
+    var d=null; try{d=parseD(e.d)}catch(err){}
+    if(d)add(d,"dep","");
+    try{if(regClosed(e))return}catch(err){}
+    try{var dl=regDeadline(e);if(dl)add(dl,"term",(e.aut||"Instituție")+" — termen de răspuns")}catch(err){}
+    try{regMilestones(e).forEach(function(m){var md=toDate(m);if(md)add(md,"term",m.title||"Termen")})}catch(err){}
+  });
+  return out;
+}
+function upcoming(){
+  var list=[];
+  function push(d,t){if(!d)return;var diff=Math.round((startOfDay(d)-today)/86400000);if(diff>=-1)list.push({d:d,diff:diff,t:t})}
+  reg.forEach(function(e){
+    if(!e)return;
+    try{if(regClosed(e))return}catch(err){}
+    try{var dl=regDeadline(e);if(dl)push(dl,(e.aut||"Instituție")+" — "+(e.tplT||"document")+": termen de răspuns")}catch(err){}
+    try{regMilestones(e).forEach(function(m){push(toDate(m),m.title||"Termen")})}catch(err){}
+  });
+  list.sort(function(a,b){return a.d-b.d});
+  var seen={},out=[];
+  list.forEach(function(x){var k="";try{k=isoD(x.d)}catch(e){return}
+    if(!seen[k]){seen[k]=1;out.push(x)}});
+  return out.slice(0,5);
+}
+function gridHtml(mk){
+  var y=view.getFullYear(),mo=view.getMonth();
+  var start=(new Date(y,mo,1).getDay()+6)%7, days=new Date(y,mo+1,0).getDate();
+  var h='<div class="cal-grid">'+ZILE.map(function(z){return '<span class="cal-wd">'+z+'</span>'}).join("");
+  for(var i=0;i<start;i++) h+='<span class="cal-day cal-out" aria-hidden="true"></span>';
+  var tIso=""; try{tIso=isoD(new Date())}catch(e){}
+  for(var d=1;d<=days;d++){
+    var dt=new Date(y,mo,d),k=""; try{k=isoD(dt)}catch(e){}
+    var m=mk[k]||{dep:false,terms:[]},cls="cal-day",dots="";
+    if(k===tIso)cls+=" cal-today";
+    if(pending===k)cls+=" cal-sel";
+    if(m.dep)dots+='<i class="cal-dot cal-dot-dep"></i>';
+    if(m.terms.length)dots+='<i class="cal-dot cal-dot-term"></i>';
+    var lab=d+" "+LUNI[mo]+" "+y+(m.dep?", depus":"")+(m.terms.length?", "+m.terms.length+" termene":"");
+    h+='<button type="button" class="'+cls+'" data-day="'+k+'" aria-label="'+esc(lab)+'">'+d+dots+'</button>';
+  }
+  return h+'</div>';
+}
+function depune(iso){
+  if(!iso)return;
+  var e=entry(),d=parseD(iso);
+  if(e){e.d=iso;try{saveReg()}catch(err){}toast("Data depunerii: "+fmtDate(d)+". Termenele s-au recalculat.");return}
+  var miss=[]; try{miss=missingList()}catch(err){}
+  if(miss.length){toast("Completează mai întâi: "+String(miss[0]));return}
+  var t=txt();
+  if(reg.some(function(x){return x.d===iso&&x.text===t})){toast("Documentul e deja în registru cu această dată.");return}
+  var n=reg.length;
+  try{regAddNow()}catch(err){toast("Nu am putut trece documentul în registru.");return}
+  if(reg.length>n){reg[reg.length-1].d=iso;saveReg();toast("Depusă pe "+fmtDate(d)+" — termenele s-au recalculat.")}
+}
+function render(){
+  var v=values(),rows="",mk=marks();
+  ITEMS.forEach(function(it){
+    var x=v.o[it.id];
+    var who=x.manual?(x.val?"bifat de tine":"debifat de tine"):(x.auto?"automat":"—");
+    rows+='<label class="cal-row'+(x.val?"":" cal-off")+'">'+
+      '<input type="checkbox" data-ck="'+it.id+'"'+(x.val?" checked":"")+'>'+
+      '<span class="cal-txt">'+esc(it.t)+'</span><span class="cal-who">'+who+'</span></label>';
+  });
+  var up=upcoming(),next="";
+  if(up.length){
+    next='<ul class="cal-next">'+up.map(function(x){
+      var z=x.diff<0?"depășit":x.diff===0?"azi":"în "+x.diff+(x.diff===1?" zi":" zile");
+      return '<li><span class="cal-days">'+z+'</span><button type="button" data-goto="'+isoD(x.d)+'">'+
+        esc(fmtDate(x.d))+" · "+esc(x.t)+'</button></li>';
+    }).join("")+'</ul>';
+  }else{
+    next='<p class="cal-hint">Niciun termen viitor. După ce marchezi depunerea, termenele apar aici și pe zilele din calendar.</p>';
+  }
+  var conf="";
+  if(pending){
+    var mm=mk[pending]||{dep:false,terms:[]},zi="";
+    if(mm.dep)zi+='<div class="cal-hint">În ziua asta ai deja o cerere în registru.</div>';
+    if(mm.terms.length)zi+='<div class="cal-hint">Termene în ziua asta: '+esc(mm.terms.join(" · "))+'</div>';
+    conf='<div class="cal-confirm"><strong>'+esc(fmtDate(parseD(pending)))+'</strong> — marchez cererea ca depusă în această zi?'+
+      '<div class="cal-btns"><button type="button" class="cal-yes" data-yes="1">Da, am depus</button>'+
+      '<button type="button" data-no="1">Anulează</button></div>'+zi+
+      '<div class="cal-hint">Data intră în registru și termenele legale se recalculează de la ea.</div></div>';
+  }
+  body.innerHTML=
+    '<div class="cal-sec">Ce ai completat · '+v.n+'/'+ITEMS.length+'</div>'+
+    '<div class="cal-prog"><i style="width:'+Math.round(v.n/ITEMS.length*100)+'%"></i></div>'+
+    '<div class="cal-list">'+rows+'</div>'+
+    '<div class="cal-sec">Calendar · apasă ziua depunerii</div>'+
+    '<div class="cal-nav"><button type="button" data-mv="-1" aria-label="Luna precedentă">‹</button>'+
+      '<b>'+LUNI[view.getMonth()]+" "+view.getFullYear()+'</b>'+
+      '<button type="button" data-mv="1" aria-label="Luna următoare">›</button></div>'+
+    gridHtml(mk)+conf+
+    '<div class="cal-sec">Urmează</div>'+next+
+    '<button type="button" class="cal-reset" data-reset="1">Resetează bifările mele pentru cererea asta</button>'+
+    '<p class="cal-hint">Bifările și registrul rămân doar în browserul ăsta. Nimic nu se trimite pe server.</p>';
+  syncBtn(v.n);
+  bind();
+}
+function syncBtn(n){
+  if(typeof n!=="number"){try{n=values().n}catch(e){n=0}}
+  btn.textContent="Calendar · "+n+"/"+ITEMS.length;
+}
+function place(){
+  if(panel.hidden)return;
+  var r=btn.getBoundingClientRect(),vw=document.documentElement.clientWidth;
+  var avail=Math.max(200,vw-24),minL=12+window.scrollX;
+  panel.style.maxWidth=avail+"px";
+  var w=panel.offsetWidth||344;
+  var maxL=window.scrollX+vw-w-12;
+  if(maxL<minL)maxL=minL;
+  var left=r.right+window.scrollX-w;
+  if(left<minL)left=minL;
+  if(left>maxL)left=maxL;
+  panel.style.left=left+"px";
+  panel.style.top=(r.bottom+window.scrollY+8)+"px";
+}
+function bind(){
+  body.querySelectorAll("[data-ck]").forEach(function(el){
+    el.addEventListener("change",function(){var b=bucket();b[el.dataset.ck]=el.checked;save();render();place()});
+  });
+  body.querySelectorAll("[data-mv]").forEach(function(el){
+    el.addEventListener("click",function(){
+      view=new Date(view.getFullYear(),view.getMonth()+parseInt(el.dataset.mv,10),1);
+      pending=null;render();place();
+    });
+  });
+  body.querySelectorAll("[data-day]").forEach(function(el){
+    el.addEventListener("click",function(){
+      pending=el.dataset.day;render();place();
+      var c=body.querySelector(".cal-confirm");
+      if(c&&c.scrollIntoView)c.scrollIntoView({block:"nearest"});
+    });
+  });
+  var yes=body.querySelector("[data-yes]"),no=body.querySelector("[data-no]");
+  if(yes)yes.addEventListener("click",function(){var k=pending;pending=null;depune(k);render();place()});
+  if(no)no.addEventListener("click",function(){pending=null;render();place()});
+  body.querySelectorAll("[data-goto]").forEach(function(el){
+    el.addEventListener("click",function(){
+      var d=parseD(el.dataset.goto);
+      if(d){view=new Date(d.getFullYear(),d.getMonth(),1);render();place()}
+    });
+  });
+  var rs=body.querySelector("[data-reset]");
+  if(rs)rs.addEventListener("click",function(){
+    delete state[docKey()];save();render();place();toast("Bifările manuale au fost resetate");
+  });
+}
+function open(){panel.hidden=false;btn.setAttribute("aria-expanded","true");render();place();closeBtn.focus()}
+function close(){panel.hidden=true;btn.setAttribute("aria-expanded","false");pending=null}
+btn.addEventListener("click",function(){panel.hidden?open():close()});
+closeBtn.addEventListener("click",function(){close();btn.focus()});
+document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!panel.hidden){close();btn.focus()}});
+document.addEventListener("pointerdown",function(e){
+  if(!panel.hidden&&!panel.contains(e.target)&&e.target!==btn&&!btn.contains(e.target))close();
+},true);
+window.addEventListener("resize",place);
+window.addEventListener("scroll",place,true);
+var timer=null;
+function tick(){
+  if(timer)return;
+  timer=setTimeout(function(){
+    timer=null;
+    try{syncBtn()}catch(e){}
+    if(!panel.hidden){render();place()}
+  },0);
+}
+document.addEventListener("input",tick,true);
+document.addEventListener("change",tick,true);
+document.addEventListener("click",function(e){if(!panel.contains(e.target))tick()},true);
+try{syncBtn()}catch(e){}
+})();
+</script>
+
+<div class="cal-panel pt-pop" id="termPanel" role="dialog" aria-modal="false" aria-label="Termenele mele" hidden>
+  <div class="cal-head"><strong>Termenele mele</strong><button class="cal-close" id="termClose" type="button" aria-label="Închide termenele">×</button></div>
+  <div id="termBody"></div>
+</div>
+<script>
+/* ============================================================
+   PACHET WEB (1,2,3,5,6) — exclusiv browser: DOM, localStorage, IndexedDB, SW.
+   Fără cont, fără parolă, fără backend, fără biblioteci externe, fără punte nativă.
+   Logica legală din scriptul principal rămâne neatinsă; aici doar o înfășurăm.
+   ============================================================ */
+(function(){
+"use strict";
+/* teste.html încarcă aplicația în iframe cu ?teste=1: atunci nu pornim nimic din pachet */
+if(new URLSearchParams(location.search).has("teste")) return;
+
+var $id=function(id){return document.getElementById(id)};
+var H=function(s){try{return esc(String(s==null?"":s))}catch(e){return String(s==null?"":s)}};
+
+function placePanel(panel,btn){
+  if(!panel||!btn||panel.hidden)return;
+  var r=btn.getBoundingClientRect(),vw=document.documentElement.clientWidth;
+  var avail=Math.max(200,vw-24),minL=12+window.scrollX;
+  panel.style.maxWidth=avail+"px";
+  var w=panel.offsetWidth||344;
+  var maxL=window.scrollX+vw-w-12;
+  if(maxL<minL)maxL=minL;
+  var left=r.right+window.scrollX-w;
+  if(left<minL)left=minL;
+  if(left>maxL)left=maxL;
+  panel.style.left=left+"px";
+  panel.style.top=(r.bottom+window.scrollY+8)+"px";
+}
+
+/* ============ 1. PWA: instalare, offline, versiune nouă ============ */
+function initPwa(){
+  var installBtn=$id("ptInstall"),off=$id("ptOffline"),upd=$id("ptUpdate");
+  function syncNet(){ if(off) off.hidden = navigator.onLine!==false; }
+  window.addEventListener("online",syncNet); window.addEventListener("offline",syncNet); syncNet();
+  var deferred=null;
+  window.addEventListener("beforeinstallprompt",function(e){
+    e.preventDefault(); deferred=e; if(installBtn)installBtn.hidden=false;
+  });
+  if(installBtn)installBtn.addEventListener("click",function(){
+    if(!deferred)return;
+    deferred.prompt();
+    deferred.userChoice.then(function(){deferred=null;installBtn.hidden=true});
+  });
+  window.addEventListener("appinstalled",function(){
+    deferred=null; if(installBtn)installBtn.hidden=true;
+    try{toast("Petent a fost instalat pe dispozitiv")}catch(e){}
+  });
+  var dismiss=upd&&upd.querySelector("[data-pt-dismiss]");
+  if(dismiss)dismiss.addEventListener("click",function(){upd.hidden=true});
+  if(!("serviceWorker" in navigator))return;
+  if(location.protocol!=="https:" && !/^(localhost|127\.0\.0\.1)$/.test(location.hostname))return;
+  var reloading=false,hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.addEventListener("controllerchange",function(){
+    /* La PRIMA instalare claim() ne preia pagina: nu are rost s-o reîncărcăm.
+       Reîncărcăm doar când un SW nou înlocuiește unul deja activ (SKIP_WAITING). */
+    if(!hadController||reloading)return; reloading=true; location.reload();
+  });
+  navigator.serviceWorker.register("sw.js",{scope:"./"}).then(function(reg){
+    function show(w){
+      if(!upd||!w)return;
+      upd.hidden=false;
+      var b=upd.querySelector("[data-pt-reload]");
+      if(b)b.onclick=function(){try{w.postMessage("SKIP_WAITING")}catch(e){} upd.hidden=true};
+    }
+    if(reg.waiting&&navigator.serviceWorker.controller)show(reg.waiting);
+    reg.addEventListener("updatefound",function(){
+      var nw=reg.installing; if(!nw)return;
+      nw.addEventListener("statechange",function(){
+        if(nw.state==="installed"&&navigator.serviceWorker.controller)show(nw);
+      });
+    });
+  }).catch(function(){});
+}
+
+/* ============ 2. ANEXE PERSISTENTE (IndexedDB + copie completă) ============ */
+var ADB="petent-anexe",AST="fisiere";
+var K_V="c544_anexe_v",K_META="c544_anexe_meta",K_DATA="c544_anexe_data";
+var MAX_EACH=300*1024,MAX_TOTAL=1024*1024;
+var attMeta=[],attBackupOk=true;
+
+function idb(){
+  return new Promise(function(res,rej){
+    var q;
+    try{q=indexedDB.open(ADB,1)}catch(e){rej(e);return}
+    q.onupgradeneeded=function(){var db=q.result;if(!db.objectStoreNames.contains(AST))db.createObjectStore(AST,{keyPath:"id"})};
+    q.onsuccess=function(){res(q.result)}; q.onerror=function(){rej(q.error||new Error("IndexedDB"))};
+  });
+}
+function tx(mode,fn){
+  return idb().then(function(db){return new Promise(function(res,rej){
+    var t=db.transaction(AST,mode),s=t.objectStore(AST),out;
+    try{out=fn(s)}catch(e){rej(e);return}
+    t.oncomplete=function(){res(out&&out.result!==undefined?out.result:undefined)};
+    t.onerror=function(){rej(t.error||new Error("tranzacție"))};
+  })});
+}
+function idbPut(r){return tx("readwrite",function(s){s.put(r);return null})}
+function idbGet(k){return tx("readonly",function(s){return s.get(k)})}
+function idbDel(k){return tx("readwrite",function(s){s.delete(k);return null})}
+function idbAll(){return tx("readonly",function(s){var q=s.getAll();return q})}
+function idbClear(){return tx("readwrite",function(s){s.clear();return null})}
+
+function readMeta(){try{var v=JSON.parse(localStorage.getItem(K_META));return Array.isArray(v)?v:[]}catch(e){return []}}
+function writeMeta(a){try{localStorage.setItem(K_META,JSON.stringify(a));return true}catch(e){return false}}
+function readData(){try{var v=JSON.parse(localStorage.getItem(K_DATA));return v&&typeof v==="object"&&!Array.isArray(v)?v:{}}catch(e){return {}}}
+function writeData(o){try{localStorage.setItem(K_DATA,JSON.stringify(o));return true}catch(e){try{localStorage.removeItem(K_DATA)}catch(_){}return false}}
+function newId(){return "a"+Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function b64ToBlob(b64,type){
+  var bin=atob(b64),arr=new Uint8Array(bin.length),i;
+  for(i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new Blob([arr],{type:type||"application/octet-stream"});
+}
+function renderAttNote(missing){
+  var el=$id("ptAttNote"); if(!el)return;
+  var msgs=[],big=attMeta.filter(function(m){return m.size>MAX_EACH}).length;
+  if(attMeta.length)msgs.push("Cele "+attMeta.length+" "+(attMeta.length===1?"fișier rămâne":"fișiere rămân")+" în dosar și după reîncărcarea paginii.");
+  if(big)msgs.push(big+" "+(big===1?"fișier mare nu intră":"fișiere mari nu intră")+" în copia completă (limită 300 KB per fișier, 1 MB în total), dar rămân pe dispozitiv.");
+  if(!attBackupOk)msgs.push("Browserul nu a mai avut loc pentru copia fișierelor mici; salvează-le separat înainte de a schimba dispozitivul.");
+  if(missing&&missing.length)msgs.push("Nu am putut recupera: "+H(missing.join(", "))+".");
+  el.innerHTML=msgs.length?'<div class="notice info">'+msgs.map(function(m){return "<p>"+m+"</p>"}).join("")+"</div>":"";
+}
+function syncAtt(){
+  var metas=[],chosen=[],total=0;
+  try{
+    anexe.forEach(function(a){
+      if(!a.id)a.id=newId();
+      metas.push({id:a.id,name:a.file.name,type:a.file.type||"application/octet-stream",size:a.file.size,desc:a.desc||"",ts:Date.now()});
+      if(a.file.size<=MAX_EACH&&total+a.file.size<=MAX_TOTAL){total+=a.file.size;chosen.push(a)}
+    });
+  }catch(e){return}
+  attMeta=metas; writeMeta(metas);
+  try{localStorage.setItem(K_V,"1")}catch(e){}
+  Promise.all(chosen.map(function(a){
+    return b64OfBlob(a.file).then(function(b){return [a.id,b]}).catch(function(){return null});
+  })).then(function(pairs){
+    var o={}; pairs.forEach(function(p){if(p)o[p[0]]=p[1]});
+    attBackupOk=writeData(o); renderAttNote([]);
+  }).catch(function(){renderAttNote([])});
+  /* NU re-desenăm lista aici: pe câmpul „descriere” ar recrea inputul și ar pierde focusul
+     în timp ce utilizatorul tastează. Aplicația principală și-a făcut deja randarea. */
+}
+function buildAttFile(m,blob){
+  try{return {id:m.id,file:new File([blob],m.name,{type:m.type||"application/octet-stream"}),desc:m.desc||""}}catch(e){return null}
+}
+function paintRestore(meta,out,missing){
+  try{anexe.length=0;out.forEach(function(x){anexe.push(x)})}catch(e){}
+  attMeta=meta; attBackupOk=!!localStorage.getItem(K_DATA)||!meta.length;
+  try{localStorage.setItem(K_V,"1")}catch(e){}
+  renderAttNote(missing);
+  try{renderAnexe();render()}catch(e){}
+}
+/* Restaurarea nu așteaptă IndexedDB: copia completă din localStorage e sincronă și
+   e suficientă pentru fișierele mici. IndexedDB e consultat doar pentru fișierele mari
+   (care nu intră în copie) și are o limită de timp — altfel un browser cu IDB blocat
+   lăsa dosarul gol deși datele erau prezente. */
+function attRestore(){
+  var fresh=localStorage.getItem(K_V)===null;
+  var meta=readMeta(),data=readData();
+  var out=[],have={},missing=[];
+  meta.forEach(function(m){
+    var blob=null;
+    if(data[m.id]){try{blob=b64ToBlob(data[m.id],m.type)}catch(e){}}
+    if(!blob)return;
+    have[m.id]=blob;
+    var f=buildAttFile(m,blob);
+    if(f)out.push(f);else missing.push(m.name);
+    try{idbPut({id:m.id,blob:blob,name:m.name,type:m.type,size:m.size,desc:m.desc,ts:m.ts||Date.now()}).catch(function(){})}catch(e){}
+  });
+  paintRestore(meta,out,[]);                 /* imediat, fără clipirea listei goale */
+  if(fresh)try{idbClear().catch(function(){})}catch(e){}
+  var need=meta.filter(function(m){return !have[m.id]});
+  if(!need.length){renderAttNote(missing);return Promise.resolve()}
+  var timed=new Promise(function(res){setTimeout(function(){res(null)},1600)});
+  return Promise.race([idbAll().catch(function(){return []}),timed]).then(function(recs){
+    var byId={};(recs||[]).forEach(function(r){if(r&&r.id)byId[r.id]=r});
+    need.forEach(function(m){
+      var blob=byId[m.id]&&byId[m.id].blob,f=blob?buildAttFile(m,blob):null;
+      if(f)out.push(f);else missing.push(m.name);
+    });
+    paintRestore(meta,out,missing);
+  }).catch(function(){paintRestore(meta,out,missing)});
+}
+function initAtt(){
+  /* selecție: capturăm FileList înainte ca aplicația să golească inputul */
+  document.addEventListener("change",function(e){
+    if(!e.target||e.target.id!=="anexeInput"||!e.target.files||!e.target.files.length)return;
+    var has={};
+    try{anexe.forEach(function(a){has[a.file.name+"|"+a.file.size]=1})}catch(err){}
+    var fs=[];
+    Array.prototype.forEach.call(e.target.files,function(f){
+      if(has[f.name+"|"+f.size])return;
+      var id=newId();
+      fs.push({f:f,id:id});
+      idbPut({id:id,blob:f,name:f.name,type:f.type||"application/octet-stream",size:f.size,desc:f.name.replace(/\.[^.]+$/,""),ts:Date.now()}).catch(function(){});
+    });
+    if(!fs.length)return;
+    setTimeout(function(){
+      fs.forEach(function(x){
+        for(var i=0;i<anexe.length;i++){
+          if(!anexe[i].id&&anexe[i].file.name===x.f.name&&anexe[i].file.size===x.f.size){anexe[i].id=x.id;break}
+        }
+      });
+      syncAtt();
+    },0);
+  },true);
+  /* eliminare */
+  document.addEventListener("click",function(e){
+    var b=e.target&&e.target.closest?e.target.closest("[data-rm]"):null;
+    var ul=$id("anexeList");
+    if(!b||!ul||!ul.contains(b))return;
+    var a=null; try{a=anexe[+b.dataset.rm]}catch(err){}
+    var id=a&&a.id;
+    setTimeout(function(){if(id)idbDel(id).catch(function(){});syncAtt()},0);
+  },true);
+  /* descriere */
+  var descT=null;
+  document.addEventListener("input",function(e){
+    var el=e.target,ul=$id("anexeList");
+    if(!el||!el.matches||!el.matches("[data-desc]")||!ul||!ul.contains(el))return;
+    clearTimeout(descT); descT=setTimeout(syncAtt,450);
+  },true);
+}
+/* Legăm fișierele de intrarea din registru fără a modifica regAddNow */
+function wrapRegistry(){
+  var orig=window.regAddNow;
+  if(typeof orig!=="function")return;
+  window.regAddNow=function(){
+    var n=reg.length,r=orig.apply(this,arguments);
+    if(reg.length>n){
+      var e=reg[reg.length-1];
+      try{e.att=anexe.map(function(a){return {id:a.id||"",name:a.file.name,desc:a.desc||"",size:a.file.size,type:a.file.type||""}})}catch(err){}
+      try{saveReg()}catch(err){}
+    }
+    return r;
+  };
+}
+/* Anexele ca pagini în Dosarul complet */
+var dosarSeq=0;
+function appendDosarAtt(){
+  var box=$id("dosarOut"); if(!box)return;
+  var seq=++dosarSeq;
+  box.querySelectorAll(".pt-att-page").forEach(function(n){n.remove()});
+  var e=null; try{e=reg.find(function(x){return x.id===dosarId})}catch(err){}
+  if(!e||!e.att||!e.att.length)return;
+  e.att.forEach(function(a){
+    idbGet(a.id).then(function(rec){
+      if(seq!==dosarSeq)return;   /* dosarul s-a schimbat între timp */
+      if(!box.isConnected)return;
+      var blob=rec&&rec.blob,url="";
+      try{if(blob)url=URL.createObjectURL(blob)}catch(err){}
+      var div=document.createElement("div"); div.className="dosar-doc pt-att-page";
+      var img=url&&/^image\//.test(a.type||"");
+      div.innerHTML='<h2 class="dosar-tit">'+H(a.desc||a.name)+'</h2>'+
+        '<p class="dosar-meta">Anexă din dosar · '+H(a.name)+' · '+Math.max(1,Math.round((a.size||0)/1024))+' KB</p>'+
+        (img?'<img alt="'+H(a.desc||a.name)+'" src="'+url+'">'
+          :url?'<div class="dosar-body"><a href="'+url+'" download="'+H(a.name)+'">Deschide / salvează fișierul</a></div>'
+              :'<div class="dosar-body">Fișierul nu mai este pe acest dispozitiv.</div>');
+      box.appendChild(div);
+    }).catch(function(){});
+  });
+}
+function wrapDosar(){
+  var orig=window.renderDosar;
+  if(typeof orig!=="function")return;
+  window.renderDosar=function(){var r=orig.apply(this,arguments);try{appendDosarAtt()}catch(e){}return r};
+}
+
+/* ============ 3. PANOU TERMENE PE WEB ============ */
+var termBtn=$id("termBtn"),termPanel=$id("termPanel"),termBody=$id("termBody"),termClose=$id("termClose");
+function dLeft(d){return !d?null:Math.round((startOfDay(d)-startOfDay(new Date()))/86400000)}
+function zile(n){return n===1?"zi":"zile"}
+function badge(d){
+  if(d===null)return '<span class="pt-badge">fără termen</span>';
+  if(d<0)return '<span class="pt-badge late">depășit de '+(-d)+" "+zile(-d)+'</span>';
+  if(d===0)return '<span class="pt-badge warn">expiră azi</span>';
+  if(d<=3)return '<span class="pt-badge warn">în '+d+" "+zile(d)+'</span>';
+  return '<span class="pt-badge ok">în '+d+" "+zile(d)+'</span>';
+}
+function termEntries(){
+  var out=[];
+  try{
+    reg.forEach(function(e){
+      if(!e)return;
+      if(regClosed(e))return;
+      var dl=null,ms=[];
+      try{dl=regDeadline(e)}catch(err){}
+      try{ms=regMilestones(e)||[]}catch(err){}
+      out.push({e:e,dl:dl,ms:ms});
+    });
+  }catch(err){}
+  return out;
+}
+function renderTerm(){
+  if(!termBtn)return;
+  var list=termEntries();
+  var soon=list.filter(function(x){var d=dLeft(x.dl);return d!==null&&d<=3}).length;
+  termBtn.textContent="Termene"+(soon?" · "+soon:"");
+  termBtn.classList.toggle("pt-urgent",soon>0);
+  if(!termPanel||termPanel.hidden||!termBody)return;
+  var html="",i;
+  if(!list.length){
+    html='<p class="pt-empty">Nicio cerere în așteptare. După ce treci un document în registru, termenele apar aici automat.</p>';
+  }else{
+    list.sort(function(a,b){return (a.dl?a.dl.getTime():Infinity)-(b.dl?b.dl.getTime():Infinity)});
+    html='<div class="pt-sec">'+list.length+" "+(list.length===1?"cerere în așteptare":"cereri în așteptare")+" · "+soon+" "+(soon===1?"termen apropiat":"termene apropiate")+'</div>';
+    html+=list.map(function(x){
+      var e=x.e,d=dLeft(x.dl);
+      return '<div class="pt-term"><div class="pt-term-hd"><strong>'+H(e.aut||"Instituție")+'</strong>'+badge(d)+'</div>'+
+        '<div class="pt-mini">'+H((typeof DOC_LBL!=="undefined"&&DOC_LBL[e.doc])||e.doc||"Document")+' · depusă '+(e.d?H(fmtDate(parseD(e.d)||new Date())):"—")+'</div>'+
+        (x.dl?'<div class="pt-days">Termen de răspuns: '+H(fmtDate(x.dl))+'</div>':'')+
+        (x.ms.length?'<details class="pt-details"><summary>Toate reperele ('+x.ms.length+')</summary><ul class="pt-ms">'+
+          x.ms.map(function(m){return '<li><span>'+H(fmtDate(m.date))+'</span> '+H(m.title||"Termen")+'</li>'}).join("")+
+          '</ul></details>':'')+
+        '<div class="pt-links"><button type="button" data-ics="'+H(e.id)+'">Descarcă .ics</button>'+
+        '<button type="button" data-goreg="'+H(e.id)+'">Vezi în registru</button></div></div>';
+    }).join("");
+  }
+  html+='<p class="pt-mini">Reamintirile apar aici și într-un mesaj scurt cât timp pagina e deschisă. Nu se cere nicio permisiune și nu se trimite nimic.</p>';
+  termBody.innerHTML=html;
+  termBody.querySelectorAll("[data-ics]").forEach(function(b){
+    b.addEventListener("click",function(){
+      var e=reg.find(function(x){return x.id===b.dataset.ics});
+      if(e)try{downloadIcs(e)}catch(err){toast("Exportul .ics nu a funcționat")}
+    });
+  });
+  termBody.querySelectorAll("[data-goreg]").forEach(function(b){
+    b.addEventListener("click",function(){
+      closeTerm(); var s=$id("regSection");
+      if(s)s.scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+}
+function closeTerm(){if(!termPanel)return;termPanel.hidden=true;if(termBtn)termBtn.setAttribute("aria-expanded","false")}
+var reminded={};
+function checkReminders(){
+  var msgs=[];
+  termEntries().forEach(function(x){
+    var d=dLeft(x.dl);
+    if(d===null||d>3||d< -30)return;
+    var key=x.e.id+"|"+(x.dl?isoD(x.dl):"");
+    if(reminded[key])return; reminded[key]=1;
+    var aut=x.e.aut||"instituție";
+    msgs.push(d<0?"Termen depășit: "+aut+" ("+(-d)+" "+zile(-d)+")":
+              d===0?"Termenul expiră azi: "+aut:"Termen în "+d+" "+zile(d)+": "+aut);
+  });
+  if(msgs.length)try{toast("Termene: "+msgs.slice(0,2).join(" · ")+(msgs.length>2?" · +"+(msgs.length-2):""))}catch(e){}
+}
+function initTerm(){
+  if(!termBtn||!termPanel||!termBody||!termClose)return;
+  termBtn.setAttribute("aria-expanded","false");
+  termBtn.addEventListener("click",function(){
+    if(!termPanel.hidden){closeTerm();return}
+    var cal=$id("calPanel"),cb=$id("calBtn");
+    if(cal&&!cal.hidden&&cb)cb.click();
+    termPanel.hidden=false;termBtn.setAttribute("aria-expanded","true");
+    renderTerm();placePanel(termPanel,termBtn);termClose.focus();
+  });
+  termClose.addEventListener("click",function(){closeTerm();termBtn.focus()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!termPanel.hidden){closeTerm();termBtn.focus()}});
+  document.addEventListener("pointerdown",function(e){
+    if(!termPanel.hidden&&!termPanel.contains(e.target)&&e.target!==termBtn&&!termBtn.contains(e.target))closeTerm();
+  },true);
+  document.addEventListener("click",function(e){
+    var cb=$id("calBtn");
+    if(cb&&(e.target===cb||cb.contains(e.target))&&!termPanel.hidden)closeTerm();
+  },true);
+  window.addEventListener("resize",function(){placePanel(termPanel,termBtn)});
+  window.addEventListener("scroll",function(){placePanel(termPanel,termBtn)},true);
+  /* butonul se actualizează de câte ori se redesenează registrul */
+  var orig=window.renderReg;
+  if(typeof orig==="function")window.renderReg=function(){var r=orig.apply(this,arguments);try{renderTerm()}catch(e){}return r};
+  document.addEventListener("change",function(){try{renderTerm()}catch(e){}},true);
+  renderTerm();
+  setTimeout(checkReminders,1900);
+  setInterval(function(){try{renderTerm();checkReminders()}catch(e){}},60000);
+}
+
+/* ============ 5. TRIMITERE CĂTRE MAI MULTE INSTITUȚII ============ */
+var K_MULTI="c544_multi",extras=[],lastDocs=null;
+function multiLoad(){try{var v=JSON.parse(localStorage.getItem(K_MULTI));return Array.isArray(v)?v:[]}catch(e){return []}}
+function multiSave(a){try{localStorage.setItem(K_MULTI,JSON.stringify(a))}catch(e){}}
+function recipients(){
+  var main={aut:(sel.autoritate||"").trim(),email:(sel.email||"").trim(),n:sel.n||"",jud:sel.jud,main:true};
+  return [main].concat(extras);
+}
+function renderMulti(){
+  var box=$id("multiList"); if(!box)return;
+  box.innerHTML=extras.length?extras.map(function(r,i){
+    return '<span class="pt-chip"><span title="'+H(r.aut+(r.email?" · "+r.email:""))+'">'+H(r.aut)+'</span>'+
+      '<button type="button" data-mrm="'+i+'" aria-label="Elimină '+H(r.aut)+'">×</button></span>';
+  }).join(""):'<span class="pt-mini">Nu ai adăugat încă alte instituții. Documentul principal rămâne cel din câmpurile de mai sus.</span>';
+  box.querySelectorAll("[data-mrm]").forEach(function(b){
+    b.addEventListener("click",function(){extras.splice(+b.dataset.mrm,1);multiSave(extras);renderMulti()});
+  });
+  ["multiGen","multiPrint","multiCopy","multiReg"].forEach(function(id){
+    var b=$id(id); if(b)b.disabled=extras.length===0;
+  });
+}
+function addRecipient(aut,email,n,jud){
+  aut=(aut||"").trim(); if(!aut){toast("Scrie denumirea instituției");return}
+  if(extras.some(function(x){return norm(x.aut)===norm(aut)})){toast("Instituția e deja în listă");return}
+  extras.push({aut:aut,email:(email||"").trim(),n:n||"",jud:jud||sel.jud});
+  multiSave(extras); renderMulti(); toast("Adăugat: "+aut);
+}
+function docsFor(list){
+  var oA=sel.autoritate,oE=sel.email,oN=sel.n,oJ=sel.jud;
+  var out=list.map(function(r){
+    sel.autoritate=r.aut;sel.email=r.email;sel.n=r.n||"";sel.jud=r.jud||oJ;
+    var t="",s="";
+    try{t=cleanText(buildText());s=subject()}catch(e){t="(textul nu a putut fi generat)"}
+    return {r:r,text:t,subj:s};
+  });
+  sel.autoritate=oA;sel.email=oE;sel.n=oN;sel.jud=oJ;
+  return out;
+}
+function packageHtml(docs){
+  return '<!DOCTYPE html><html lang="ro"><head><meta charset="UTF-8"><title>Petent — pachet cu '+docs.length+' cereri</title>'+
+    '<style>body{font:14px/1.6 Georgia,serif;color:#222;margin:0}section{padding:18mm 16mm;break-after:page}'+
+    'section:last-child{break-after:auto}h1{font-size:18px;margin:0 0 4px}p.meta{color:#666;font-size:12px;margin:0 0 18px}'+
+    'pre{white-space:pre-wrap;font:14px/1.6 Georgia,serif;margin:0}</style></head><body>'+
+    docs.map(function(d,i){
+      return '<section><h1>'+H(d.r.aut)+'</h1><p class="meta">Documentul '+(i+1)+" / "+docs.length+' · '+H(d.subj)+'</p><pre>'+H(d.text)+'</pre></section>';
+    }).join("")+'</body></html>';
+}
+function currentDocs(){
+  var list=recipients();
+  if(list.length<2){toast("Adaugă cel puțin o instituție suplimentară");return null}
+  lastDocs=docsFor(list); return lastDocs;
+}
+function initMulti(){
+  if(!$id("multiBox"))return;
+  extras=multiLoad(); renderMulti();
+  var sIn=$id("multiSearch"),sOut=$id("multiResults");
+  function search(){
+    var q=norm(sIn.value||"");
+    if(!q){sOut.hidden=true;sOut.innerHTML="";return}
+    var hits=[];
+    try{
+      Object.keys(UAT_BAZA).forEach(function(j){
+        (UAT_BAZA[j]||[]).forEach(function(u){
+          if(hits.length>=8)return;
+          if(norm(u.n).indexOf(q)>=0)hits.push({jud:j,u:u});
+        });
+      });
+      Object.keys(INSTITUTII_CONTROL||{}).forEach(function(k){
+        if(hits.length>=8)return;
+        var I=INSTITUTII_CONTROL[k];
+        if(norm(I.t||"").indexOf(q)>=0)hits.push({ctrl:k,I:I});
+      });
+    }catch(e){}
+    if(!hits.length){sOut.hidden=true;sOut.innerHTML="";return}
+    sOut.innerHTML=hits.map(function(h){
+      if(h.u){
+        var u=h.u,aut="";
+        /* autoritateDin() aplică singur diacritice(); a le aplica și aici le-ar dubla */
+        try{aut=autoritateDin(u)}catch(e){aut=u.n}
+        var em=""; try{em=ovr[ovrKey(h.jud,u.n)]||u.e||""}catch(e){em=u.e||""}
+        return '<li><button type="button" data-mj="'+H(h.jud)+'" data-mn="'+H(u.n)+'" data-ma="'+H(aut)+'" data-me="'+H(em)+'">'+
+          H(diacritice(u.n))+' <small>· '+H(h.jud)+'</small></button></li>';
+      }
+      var aut2="",em2="";
+      try{aut2=h.I.aut(sel.jud)}catch(e){aut2=h.I.t||""}
+      /* instEmail() întoarce uneori un string (CONTROL_JUDET), alteori {e,s} */
+      try{var ie=instEmail(h.ctrl,sel.jud);em2=typeof ie==="string"?ie:((ie&&ie.e)||"")}catch(e){}
+      return '<li><button type="button" data-ma="'+H(aut2)+'" data-me="'+H(em2)+'">'+H(h.I.t)+' <small>· instituție de control</small></button></li>';
+    }).join("");
+    sOut.hidden=false;
+    sOut.querySelectorAll("[data-ma]").forEach(function(b){
+      b.addEventListener("click",function(){
+        addRecipient(b.dataset.ma,b.dataset.me,b.dataset.mn||"",b.dataset.mj||sel.jud);
+        sIn.value="";sOut.hidden=true;sOut.innerHTML="";
+      });
+    });
+  }
+  if(sIn)sIn.addEventListener("input",search);
+  var add=$id("multiAdd");
+  if(add)add.addEventListener("click",function(){
+    addRecipient($id("multiName").value,$id("multiEmail").value,"",sel.jud);
+    $id("multiName").value="";$id("multiEmail").value="";
+  });
+  var gen=$id("multiGen");
+  if(gen)gen.addEventListener("click",function(){
+    var d=currentDocs(); if(!d)return;
+    var blob=new Blob([packageHtml(d)],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob);
+    var a=document.createElement("a");a.href=url;a.download="petent-pachet-"+isoD(new Date())+".html";
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(function(){URL.revokeObjectURL(url)},60000);
+    $id("multiOut").innerHTML='<div class="notice info"><p>Pachet cu '+d.length+' documente descărcat. Deschide fișierul și tipărește-l sau trimite fiecare cerere separat.</p></div>';
+    toast("Pachet cu "+d.length+" documente descărcat");
+  });
+  var pr=$id("multiPrint");
+  if(pr)pr.addEventListener("click",function(){
+    var d=currentDocs(); if(!d)return;
+    var blob=new Blob([packageHtml(d)],{type:"text/html;charset=utf-8"}),url=URL.createObjectURL(blob);
+    var f=document.createElement("iframe");f.style.cssText="position:fixed;width:0;height:0;border:0";f.src=url;
+    document.body.appendChild(f);
+    f.onload=function(){
+      try{f.contentWindow.focus();f.contentWindow.print()}catch(e){toast("Tipărirea nu a pornit; folosește descărcarea")}
+      setTimeout(function(){f.remove();URL.revokeObjectURL(url)},60000);
+    };
+  });
+  var cp=$id("multiCopy");
+  if(cp)cp.addEventListener("click",function(){
+    var d=currentDocs(); if(!d)return;
+    var t=d.map(function(x){return "Către: "+x.r.aut+"\nSubiect: "+x.subj+"\n\n"+x.text}).join("\n\n------------------------------\n\n");
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(t).then(function(){toast("Toate textele au fost copiate")}).catch(function(){toast("Copierea nu a reușit")});
+    }else toast("Acest browser nu permite copierea automată");
+  });
+  var rg=$id("multiReg"),out=$id("multiOut");
+  function doReg(){
+    var list=recipients(),gid="m"+Date.now().toString(36);
+    var oA=sel.autoritate,oE=sel.email,oN=sel.n,oJ=sel.jud,oT=window.toast,added=0;
+    try{
+      window.toast=function(){};
+      list.forEach(function(r){
+        sel.autoritate=r.aut;sel.email=r.email;sel.n=r.n||"";sel.jud=r.jud||oJ;
+        var n=reg.length;
+        try{window.regAddNow()}catch(e){}
+        if(reg.length>n){var e=reg[reg.length-1];e.multi=gid;added++}
+      });
+    }finally{
+      sel.autoritate=oA;sel.email=oE;sel.n=oN;sel.jud=oJ;window.toast=oT;
+    }
+    try{saveReg();render()}catch(e){}
+    toast(added+" documente trecute în registru, fiecare cu termene independente.");
+    if(out)out.innerHTML='<div class="notice info"><p>'+added+' intrări noi, grupate sub același pachet. Fiecare are propria dată și propriile termene Legii 544/2001.</p></div>';
+    $id("multiBox").scrollIntoView({behavior:"smooth",block:"start"});
+  }
+  if(rg)rg.addEventListener("click",function(){
+    var list=recipients();
+    if(list.length<2){toast("Adaugă cel puțin o instituție suplimentară");return}
+    if(typeof askInline==="function")askInline({after:rg,back:rg,ok:"Adaugă în registru",
+      msg:"Voi trece "+list.length+" documente în registru, fiecare cu data de azi și termene independente. Continui?",run:doReg});
+    else if(window.confirm("Treci "+list.length+" documente în registru?"))doReg();
+  });
+}
+
+/* ============ PORNIRE ============ */
+try{initPwa()}catch(e){}
+try{initAtt();wrapRegistry();wrapDosar();attRestore()}catch(e){}
+try{initTerm()}catch(e){}
+try{initMulti()}catch(e){}
+})();
+</script>
+
 </body>
 </html>
