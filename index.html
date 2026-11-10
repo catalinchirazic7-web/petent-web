@@ -1,40 +1,66 @@
 <!DOCTYPE html>
-<html lang="ro">
+<html lang="ro" data-skin="retro">
 <head>
 <meta charset="UTF-8">
+<script>/* Applied before first paint so the saved skin never flashes the default background. */
+(function(){try{var v=JSON.parse(localStorage.getItem("c544_skin"));
+  if(/^(retro|cald|albastru|mono)$/.test(v)) document.documentElement.setAttribute("data-skin",v);
+}catch(e){}})();</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
 <title>Petent — cereri și sesizări către autorități</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23FFFFFF'/><g transform='rotate(-8 32 32)' fill='none' stroke='%231D3F8F' stroke-linecap='round'><rect x='8' y='15' width='48' height='34' rx='6' stroke-width='4'/><rect x='13' y='20' width='38' height='24' rx='3' stroke-width='1.6'/><path d='M18 28h6M28 28h17M18 37h8M30 37h15' stroke-width='3'/></g></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23FFFFFF'/><g transform='rotate(-8 32 32)' fill='none' stroke='%231D3F8F' stroke-linecap='round'><rect x='8' y='15' width='48' height='34' rx='6' stroke-width='4'/><rect x='13' y='20' width='38' height='24' rx='3' stroke-width='1.6'/><path d='M18 28h6M28 28h17M18 37h8M30 37h15' stroke-width='3'/></g></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23FBF6EC'/><g transform='rotate(-6 32 32)' fill='none' stroke='%230F766E' stroke-linecap='round' stroke-linejoin='round'><rect x='13' y='9' width='38' height='46' rx='7' stroke-width='3.6'/><path d='M21 24h22M21 33h22M21 42h14' stroke-width='3.2'/></g><circle cx='51' cy='15' r='6' fill='%23E2725B'/></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='16' fill='%23FBF6EC'/><g transform='rotate(-6 32 32)' fill='none' stroke='%230F766E' stroke-linecap='round' stroke-linejoin='round'><rect x='13' y='9' width='38' height='46' rx='7' stroke-width='3.6'/><path d='M21 24h22M21 33h22M21 42h14' stroke-width='3.2'/></g><circle cx='51' cy='15' r='6' fill='%23E2725B'/></svg>">
 <style>
 /* ============================================================
-   TOKENURI DE CULOARE
-   Albastru de ștampilă, hârtie rece, roșu de avertisment.
+   IDENTITATE VIZUALĂ — hârtie caldă, cerneală verde, accente corai
+   Fără albastru de ștampilă, fără roșu de avertisment.
    ============================================================ */
 :root{
-  --bg:#EEF1F4; --panel:#FFFFFF; --ink:#18202C; --muted:#5A6576;
-  --line:#D5DBE3; --accent:#1D3F8F; --accent-ink:#FFFFFF; --accent-soft:#E3E9F6;
-  --warn:#A8261B; --warn-soft:#FBE9E7; --ok:#1E6B3A; --ok-soft:#E4F3E9;
-  --paper:#FFFFFF; --paper-ink:#1A1A1A; --paper-edge:#C9D1DC;
-  --radius-lg:14px; --radius-sm:8px;
+  --bg:#F3EDDF; --panel:#FFFCF4; --ink:#2B2822; --muted:#6E6557;
+  --line:#DED4BE; --accent:#0F766E; --accent-ink:#FFFFFF; --accent-soft:#E4F3EF;
+  --warn:#B0492A; --warn-soft:#FCEDE4; --ok:#2E7D5B; --ok-soft:#E6F4EC;
+  --paper:#F7EEDC; --paper-ink:#3B3327; --paper-edge:#D6C7A8;
+  --coral:#E2725B; --mint:#3EBFA0;
+  /* granulație de hârtie veche, generată local, fără fișiere și fără rețea */
+  --grain:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)' opacity='.20'/%3E%3C/svg%3E");
+  --grain-soft:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='s'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23s)' opacity='.085'/%3E%3C/svg%3E");
+  --radius-lg:18px; --radius-sm:12px; --radius-xl:22px;
+  --grad:linear-gradient(135deg,#0A665E 0%,#0E7A6E 55%,#10786C 100%);
+  --grad-soft:linear-gradient(120deg,#F7ECD6 0%,#EDF3E4 48%,#F6E5D8 100%);
+  --sh-sm:0 1px 2px rgba(52,46,36,.05),0 5px 16px -10px rgba(52,46,36,.22);
+  --sh-md:0 3px 8px rgba(52,46,36,.06),0 18px 38px -20px rgba(52,46,36,.30);
+  --sh-lg:0 26px 64px -28px rgba(52,46,36,.38);
+  --ease:cubic-bezier(.22,.9,.28,1);
   box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);
   padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#10141B; --panel:#181E28; --ink:#E6EAF0; --muted:#98A3B3;
-    --line:#2A3342; --accent:#7EA2F2; --accent-ink:#0D1320; --accent-soft:#1E2A42;
-    --warn:#FF8F84; --warn-soft:#3A1E1C; --ok:#7FD39B; --ok-soft:#18301F;
-    --paper:#F3F1EC; --paper-ink:#1A1A1A; --paper-edge:#3A4455;
+    --bg:#181713; --panel:#23211E; --ink:#EDE7DB; --muted:#A8A092;
+    --line:#3B362E; --accent:#5FD3BE; --accent-ink:#0C211E; --accent-soft:#21332E;
+    --warn:#FFAF8E; --warn-soft:#3A241D; --ok:#8EDDB3; --ok-soft:#1B3328;
+    --paper:#EFE5CF; --paper-ink:#3B3327; --paper-edge:#594E3C;
+    --coral:#F09C86; --mint:#84DFC7;
+    --grad:linear-gradient(135deg,#4FC7AE 0%,#6FD8C0 55%,#8FE4D0 100%);
+    --grad-soft:linear-gradient(120deg,#241F19 0%,#1C2A25 48%,#2A1E1B 100%);
+    --sh-sm:0 1px 2px rgba(0,0,0,.35),0 6px 18px -10px rgba(0,0,0,.6);
+    --sh-md:0 3px 10px rgba(0,0,0,.4),0 20px 42px -20px rgba(0,0,0,.7);
+    --sh-lg:0 26px 64px -28px rgba(0,0,0,.8);
   }
 }
 :root[data-theme="dark"]{
-  --bg:#10141B; --panel:#181E28; --ink:#E6EAF0; --muted:#98A3B3;
-  --line:#2A3342; --accent:#7EA2F2; --accent-ink:#0D1320; --accent-soft:#1E2A42;
-  --warn:#FF8F84; --warn-soft:#3A1E1C; --ok:#7FD39B; --ok-soft:#18301F;
-  --paper:#F3F1EC; --paper-ink:#1A1A1A; --paper-edge:#3A4455;
+  --bg:#181713; --panel:#23211E; --ink:#EDE7DB; --muted:#A8A092;
+  --line:#3B362E; --accent:#5FD3BE; --accent-ink:#0C211E; --accent-soft:#21332E;
+  --warn:#FFAF8E; --warn-soft:#3A241D; --ok:#8EDDB3; --ok-soft:#1B3328;
+  --paper:#EFE5CF; --paper-ink:#3B3327; --paper-edge:#594E3C;
+  --coral:#F09C86; --mint:#84DFC7;
+  --grad:linear-gradient(135deg,#4FC7AE 0%,#6FD8C0 55%,#8FE4D0 100%);
+  --grad-soft:linear-gradient(120deg,#241F19 0%,#1C2A25 48%,#2A1E1B 100%);
+  --sh-sm:0 1px 2px rgba(0,0,0,.35),0 6px 18px -10px rgba(0,0,0,.6);
+  --sh-md:0 3px 10px rgba(0,0,0,.4),0 20px 42px -20px rgba(0,0,0,.7);
+  --sh-lg:0 26px 64px -28px rgba(0,0,0,.8);
 }
 *,*::before,*::after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
@@ -125,8 +151,8 @@ button.btn.primary{background:var(--accent);border-color:var(--accent);color:var
 button.btn:disabled{opacity:.45;cursor:not-allowed}
 /* Micro-interacțiuni: proprietăți listate explicit (nu „all”), ca să nu animăm font-size și layout-ul */
 button.btn{transition:background-color .2s ease,border-color .2s ease,color .2s ease,box-shadow .2s ease,transform .2s ease}
-button.btn:not(:disabled):hover{border-color:var(--accent);box-shadow:0 2px 6px rgba(24,32,44,.12);transform:translateY(-1px)}
-button.btn.primary:not(:disabled):hover{box-shadow:0 4px 12px rgba(29,63,143,.28)}
+button.btn:not(:disabled):hover{border-color:var(--accent);box-shadow:0 2px 6px rgba(52,46,36,.14);transform:translateY(-1px)}
+button.btn.primary:not(:disabled):hover{box-shadow:0 6px 18px -6px color-mix(in srgb,var(--accent) 55%,transparent)}
 button.btn:active:not(:disabled){transform:translateY(0)}
 /* „✓ Copiat” după copiere: fundal verde-petrol, text alb; contrastul e măsurat, nu presupus */
 button.btn.copied{background:#0F6B5E;border-color:#0F6B5E;color:#FFFFFF}
@@ -157,7 +183,7 @@ button.btn.small{min-height:40px;padding:8px 12px;font-size:.88rem;font-weight:5
   border-radius:4px;padding:26px 22px 30px;box-shadow:0 1px 0 var(--paper-edge),0 10px 24px -18px rgba(20,30,50,.5);
   font-family:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,"Times New Roman",serif;
   font-size:.97rem;line-height:1.62;white-space:pre-wrap;word-wrap:break-word;max-width:68ch;margin:0 auto;position:relative}
-.paper::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:#1D3F8F;border-radius:4px 0 0 4px;opacity:.85}
+.paper::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--accent);border-radius:4px 0 0 4px;opacity:.85}
 .paper .ph{background:#FFF1B8;color:#6B4E00;border-radius:3px;padding:0 3px}
 
 .notice{border-left:4px solid var(--warn);background:var(--warn-soft);color:var(--ink);
@@ -301,6 +327,389 @@ details.intro p:first-of-type{margin-top:6px}
   #dosarOut h1.dosar-cover{font-size:20pt;margin:0 0 6pt}
   #dosarOut .dosar-meta{margin:0 0 16pt;font-size:11pt}
 }
+
+/* ============================================================
+   PETENT 2.0 — strat de design: profunzime, mișcare, căldură
+   Folosește doar tokenii de mai sus. Nu atinge logica aplicației.
+   ============================================================ */
+@keyframes ptFadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes ptRibbon{from{background-position:0% 50%}to{background-position:200% 50%}}
+@keyframes ptBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+@keyframes ptDrift{from{background-position:0% 50%}to{background-position:100% 50%}}
+@keyframes ptPaperIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes ptProgress{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+
+html{scroll-behavior:smooth}
+::selection{background:var(--accent);color:var(--accent-ink)}
+body{background:var(--bg)}
+body{
+  background:
+    radial-gradient(1100px 620px at 10% -10%,color-mix(in srgb,var(--coral) 12%,transparent),transparent 62%),
+    radial-gradient(900px 560px at 92% 2%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 64%),
+    var(--bg);
+  background-attachment:fixed;
+  transition:background-color .4s var(--ease),color .3s var(--ease);
+}
+/* bara subțire de progres la derulare — progresiv, fără JavaScript */
+@supports (animation-timeline: scroll()){
+  body::before{
+    content:"";position:fixed;inset:0 0 auto 0;height:3px;z-index:60;pointer-events:none;
+    background:linear-gradient(90deg,var(--accent),var(--mint),var(--coral));
+    transform-origin:0 50%;animation:ptProgress linear both;animation-timeline:scroll(root block);
+  }
+}
+
+/* Antet: card cald cu panglică în mișcare, în loc de ștampilă */
+header.top{
+  position:relative;isolation:isolate;padding:20px 22px 22px;margin-bottom:16px;
+  background:var(--grad-soft);border:1px solid var(--line);border-radius:var(--radius-xl);
+  box-shadow:var(--sh-sm);overflow:hidden;animation:ptFadeUp .6s var(--ease) both;
+}
+header.top::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;z-index:2;
+  background:linear-gradient(90deg,var(--accent),var(--mint) 42%,var(--coral) 78%,var(--accent));
+  background-size:200% 100%;animation:ptRibbon 9s linear infinite;
+}
+header.top::after{
+  content:"";position:absolute;right:-70px;top:-90px;width:240px;height:240px;border-radius:50%;
+  background:radial-gradient(circle,color-mix(in srgb,var(--coral) 18%,transparent),transparent 70%);
+  pointer-events:none;z-index:0;
+}
+header.top > *{position:relative;z-index:1}
+header.top h1{font-size:1.85rem;font-weight:800;letter-spacing:-.035em}
+header.top h1 svg{width:46px;height:46px;color:var(--accent);animation:ptBob 6s ease-in-out infinite;
+  filter:drop-shadow(0 5px 9px color-mix(in srgb,var(--accent) 28%,transparent))}
+header.top .tag{color:var(--accent);font-weight:700}
+@media (max-width:559px){
+  header.top{padding:18px 16px}
+  header.top h1{font-size:1.6rem}
+  body{background-attachment:scroll}
+}
+
+/* Pași: intrare în scenă eșalonată + reacție la focus */
+main > *{animation:ptFadeUp .55s var(--ease) both}
+main > :nth-child(1){animation-delay:.04s}
+main > :nth-child(2){animation-delay:.09s}
+main > :nth-child(3){animation-delay:.14s}
+main > :nth-child(4){animation-delay:.19s}
+main > :nth-child(5){animation-delay:.24s}
+main > :nth-child(6){animation-delay:.29s}
+main > :nth-child(n+7){animation-delay:.34s}
+section.step,details.intro{
+  border-radius:var(--radius-xl);box-shadow:var(--sh-sm);
+  transition:box-shadow .35s var(--ease),border-color .35s var(--ease);
+}
+section.step:focus-within{border-color:var(--accent);box-shadow:var(--sh-md)}
+section.step.sub{border-left-color:var(--coral)}
+section.step > h2 .n{
+  width:30px;height:30px;font-size:.9rem;background:var(--grad);color:var(--accent-ink);
+  box-shadow:0 5px 12px -4px color-mix(in srgb,var(--accent) 55%,transparent);
+  transition:transform .3s var(--ease),box-shadow .3s var(--ease);
+}
+section.step:hover > h2 .n{transform:rotate(-8deg) scale(1.08)}
+
+/* Butoane: gradient, reflex la trecerea mouse-ului, apăsare tactilă */
+.fs-group,.theme-btn{box-shadow:var(--sh-sm);
+  transition:border-color .25s var(--ease),color .25s var(--ease),transform .25s var(--ease),box-shadow .25s var(--ease)}
+.fs-group button[aria-pressed="true"]{background:var(--grad);color:var(--accent-ink)}
+.theme-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
+button.btn{border-radius:12px;position:relative;overflow:hidden;box-shadow:var(--sh-sm);
+  transition:transform .25s var(--ease),box-shadow .25s var(--ease),background-color .25s var(--ease),border-color .25s var(--ease),color .25s var(--ease)}
+button.btn:not(:disabled):hover{transform:translateY(-2px);box-shadow:var(--sh-md);border-color:var(--accent)}
+button.btn:not(:disabled):active{transform:translateY(0) scale(.985)}
+button.btn.primary{
+  background:var(--grad);background-size:180% 100%;border-color:transparent;color:var(--accent-ink);
+  box-shadow:0 10px 22px -10px color-mix(in srgb,var(--accent) 75%,transparent);
+  animation:ptDrift 9s ease-in-out infinite alternate;
+}
+button.btn.primary::after{
+  content:"";position:absolute;top:0;left:-120%;width:55%;height:100%;pointer-events:none;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.26),transparent);
+  transform:skewX(-18deg);transition:left .7s var(--ease);
+}
+button.btn.primary:hover::after{left:130%}
+button.btn.primary:disabled{animation:none;box-shadow:none;opacity:.45}
+button.btn.primary:not(:disabled):hover{box-shadow:0 14px 28px -12px color-mix(in srgb,var(--accent) 80%,transparent)}
+
+/* Câmpuri, segmente, liste */
+input[type=text],input[type=email],input[type=tel],input[type=search],input[type=date],select,textarea{
+  border-radius:12px;background:var(--panel);
+  transition:border-color .25s var(--ease),box-shadow .25s var(--ease),background-color .25s var(--ease);
+}
+input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+.seg{border-radius:14px}
+.seg label{transition:background-color .3s var(--ease),color .3s var(--ease)}
+.seg label:has(input:checked){background:var(--grad);color:var(--accent-ink)}
+.results,.reg-item,.anexe-list li,.co-item,.cmp-item,.it-row,.an-list li{
+  transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .28s var(--ease);
+}
+@media (hover:hover){
+  .reg-item:hover,.anexe-list li:hover,.co-item:hover,.cmp-item:hover,.results li:hover,.an-list li:hover{
+    transform:translateY(-2px);box-shadow:var(--sh-sm);
+  }
+  .reg-item:hover,.anexe-list li:hover,.co-item:hover,.cmp-item:hover,.results li:hover{border-color:var(--accent)}
+}
+.linkbtn,summary{transition:color .2s var(--ease)}
+.linkbtn:hover,summary:hover{color:var(--coral)}
+
+/* Foaia: hârtie caldă, margine în degradeu, intrare lină */
+.paper{background:var(--paper)}
+.paper{background:linear-gradient(180deg,color-mix(in srgb,var(--paper) 55%,#FFFFFF),var(--paper))}
+.paper{border-radius:10px;box-shadow:0 2px 5px rgba(60,50,35,.06),0 22px 48px -28px rgba(60,50,35,.45);
+  animation:ptPaperIn .7s var(--ease) both;transition:box-shadow .35s var(--ease)}
+.paper::before{width:5px;border-radius:10px 0 0 10px;opacity:1;
+  background:linear-gradient(180deg,var(--accent),var(--mint) 55%,var(--coral))}
+.paper .ph{background:#FFE7B0;color:#7A5200}
+.paper-wrap:hover .paper{box-shadow:0 3px 8px rgba(60,50,35,.08),0 28px 56px -28px rgba(60,50,35,.5)}
+#sigPad{background:var(--paper)}
+.notice{border-left-width:5px;border-radius:0 14px 14px 0}
+.badge{padding:4px 11px;font-weight:700}
+.reg-item .badge{border-radius:12px}
+.cmp-item.st-da{border-left-color:var(--ok)}
+.cmp-item.st-nu{border-left-color:var(--warn)}
+.cmp-btns button.g[aria-pressed="true"]{border-color:var(--ok);background:var(--ok-soft);color:var(--ok)}
+.cmp-btns button.r[aria-pressed="true"]{border-color:var(--warn);background:var(--warn-soft);color:var(--warn)}
+table.sig-table th{background:#F5F0E5}
+details[open] > p,details[open] > ul,details[open] > pre{animation:ptFadeUp .35s var(--ease) both}
+footer{line-height:1.7;padding-top:8px}
+.toast{background:var(--ink);color:var(--bg);border-radius:16px;padding:11px 18px;box-shadow:var(--sh-lg);
+  transform:translateX(-50%) translateY(24px) scale(.96);
+  transition:opacity .28s var(--ease),transform .42s var(--ease)}
+.toast.show{transform:translateX(-50%) translateY(0) scale(1)}
+
+/* ============================================================
+   STRAT RETRO — hârtie de dosar, cerneală, fișă de registru
+   Pur decorativ: textură SVG locală, fără fișiere, fără rețea, fără JS.
+   ============================================================ */
+
+/* granulație fină peste petele de culoare din fundal */
+html[data-skin="retro"] body {
+  background-image:var(--grain-soft),
+    radial-gradient(1100px 620px at 10% -10%,color-mix(in srgb,var(--coral) 12%,transparent),transparent 62%),
+    radial-gradient(900px 560px at 92% 2%,color-mix(in srgb,var(--accent) 12%,transparent),transparent 64%);
+  background-size:160px 160px,100% 100%,100% 100%;
+  background-repeat:repeat,no-repeat,no-repeat;
+}
+
+/* antetul devine o fișă: chenar dublu, cotor perforat, titlu în serif */
+html[data-skin="retro"] header.top {
+  border-radius:8px;
+  box-shadow:var(--sh-sm),
+    inset 0 0 0 4px color-mix(in srgb,var(--paper) 62%,transparent),
+    inset 0 0 0 5px var(--line);
+}
+html[data-skin="retro"] header.top::before {
+  height:5px;opacity:.62;
+  background:repeating-linear-gradient(90deg,
+    var(--accent) 0 16px,var(--mint) 16px 25px,
+    var(--coral) 25px 33px,transparent 33px 40px);
+  background-size:200% 100%;animation-duration:16s;
+}
+html[data-skin="retro"] header.top h1 {
+  font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  font-weight:700;letter-spacing:-.01em;
+}
+html[data-skin="retro"] header.top .tag {font-variant:small-caps;letter-spacing:.06em}
+
+/* cardurile: hârtie velină, muchii drepte, linie de registru sub titlu */
+html[data-skin="retro"] section.step, html[data-skin="retro"] details.intro {
+  border-radius:9px;border-color:var(--line);
+  background-image:var(--grain-soft),
+    repeating-linear-gradient(180deg,rgba(120,95,60,.025) 0 1px,transparent 1px 5px);
+  background-size:160px 160px,100% 100%;
+  background-repeat:repeat,no-repeat;
+  box-shadow:var(--sh-sm),inset 0 0 0 1px rgba(255,255,255,.55);
+}
+html[data-skin="retro"] section.step > h2 {
+  padding-bottom:10px;margin-bottom:13px;
+  border-bottom:1px solid var(--line);letter-spacing:.015em;
+}
+html[data-skin="retro"] section.step > h2 .n {
+  border-radius:5px;background:var(--paper);color:var(--accent);
+  border:1.5px solid var(--accent);
+  box-shadow:2px 2px 0 color-mix(in srgb,var(--accent) 28%,transparent);
+  font-family:Georgia,"Times New Roman",serif;
+  font-variant-numeric:oldstyle-nums;
+}
+
+/* câmpuri și butoane: cerneală și presă tipografică, nu plastic */
+html[data-skin="retro"] input[type=text], html[data-skin="retro"] input[type=email], html[data-skin="retro"] input[type=tel], html[data-skin="retro"] input[type=search], html[data-skin="retro"] input[type=date], html[data-skin="retro"] select, html[data-skin="retro"] textarea {
+  border-radius:7px;border-color:var(--line);
+  box-shadow:inset 0 1px 3px rgba(120,95,60,.07);
+}
+html[data-skin="retro"] button.btn {border-radius:8px}
+html[data-skin="retro"] button.btn.primary {
+  background-color:var(--accent);background-image:var(--grain-soft);
+  background-size:160px 160px;border-color:var(--accent);
+  box-shadow:0 3px 0 color-mix(in srgb,var(--accent) 60%,#000),
+             0 10px 22px -10px color-mix(in srgb,var(--accent) 70%,transparent);
+  text-shadow:0 1px 0 rgba(0,0,0,.16);letter-spacing:.015em;animation:none;
+}
+html[data-skin="retro"] button.btn.copied {background:#0F6B5E;border-color:#0F6B5E;color:#FFFFFF}
+html[data-skin="retro"] .fs-group, html[data-skin="retro"] .theme-btn {border-radius:8px}
+html[data-skin="retro"] .seg label:has(input:checked) {background:var(--accent);color:var(--accent-ink)}
+html[data-skin="retro"] .badge {letter-spacing:.02em}
+html[data-skin="retro"] footer {border-top:1px double var(--line);padding-top:14px}
+
+/* ---- Foaia de cerere: hârtie îngălbenită, cu linie de margine ---- */
+html[data-skin="retro"] .paper {
+  border-radius:3px;border:1px solid var(--paper-edge);
+  color:var(--paper-ink);letter-spacing:.012em;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(90deg,transparent 0 17px,rgba(150,100,62,.16) 17px 18px,transparent 18px),
+    var(--grain),
+    radial-gradient(140px 100px at 6% 4%,rgba(166,124,64,.11),transparent 72%),
+    radial-gradient(180px 130px at 97% 92%,rgba(166,124,64,.10),transparent 74%),
+    linear-gradient(180deg,
+      color-mix(in srgb,var(--paper) 55%,#FFFFFF) 0%,
+      var(--paper) 38%,
+      color-mix(in srgb,var(--paper) 90%,#C7B08A) 100%);
+  background-size:100% 100%,160px 160px,100% 100%,100% 100%,100% 100%;
+  background-repeat:no-repeat,repeat,no-repeat,no-repeat,no-repeat;
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.6),
+    inset 0 0 0 5px var(--paper),
+    inset 0 0 0 6px rgba(150,110,60,.14),
+    inset 0 0 44px rgba(122,92,52,.10),
+    0 2px 5px rgba(60,50,35,.07),
+    0 22px 48px -28px rgba(60,50,35,.45);
+  text-shadow:0 0 .45px rgba(59,51,39,.30);
+}
+/* cotorul: bandă de pânză cu cusătură, nu linie modernă */
+html[data-skin="retro"] .paper::before {
+  width:6px;border-radius:3px 0 0 3px;opacity:.78;
+  background:
+    repeating-linear-gradient(180deg,transparent 0 7px,rgba(255,255,255,.38) 7px 8px),
+    linear-gradient(180deg,var(--accent),var(--mint) 55%,var(--coral));
+  box-shadow:1px 0 0 rgba(122,92,52,.18);
+}
+html[data-skin="retro"] .paper-wrap:hover .paper {
+  box-shadow:
+    inset 0 0 0 1px rgba(255,255,255,.6),
+    inset 0 0 0 5px var(--paper),
+    inset 0 0 0 6px rgba(150,110,60,.14),
+    inset 0 0 44px rgba(122,92,52,.10),
+    0 3px 8px rgba(60,50,35,.09),
+    0 28px 56px -28px rgba(60,50,35,.5);
+}
+/* rubricile de completat: hârtie carbon, nu marker digital */
+html[data-skin="retro"] .paper .ph {
+  background:#F0DCA6;color:#5B4218;border-radius:1px;
+  box-shadow:inset 0 -1px 0 rgba(120,80,20,.38);
+}
+
+/* Respect pentru utilizatorii care nu vor mișcare */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.001ms !important;animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;scroll-behavior:auto !important}
+  body::before{display:none !important}
+  .paper,header.top,main > *{opacity:1 !important;transform:none !important}
+}
+/* Tipărirea rămâne alb-negru, fără umbre și fără animații */
+@media print{
+  *,*::before,*::after{animation:none !important;transition:none !important;
+    box-shadow:none !important;text-shadow:none !important;transform:none !important}
+  body{background:#fff !important;background-image:none !important}
+  body::before,header.top::before,header.top::after,.toast{display:none !important}
+  .paper{background:#fff !important;border-radius:0 !important}
+  .paper::before{display:none !important}
+  .paper .ph{background:none !important;color:#000 !important;padding:0 !important}
+  main > *{opacity:1 !important}
+}
+/* Retro-ul dispare la tipar: hârtia rămâne albă, fără texturi, chenare sau umbre */
+@media print{
+  body,header.top,section.step,details.intro,.paper,.paper::before,button.btn.primary{
+    background-image:none !important;text-shadow:none !important;
+  }
+  .paper{border:0 !important;box-shadow:none !important;color:#000 !important;
+    border-radius:0 !important;background:#fff !important}
+  section.step,details.intro,header.top{box-shadow:none !important;border:0 !important}
+  section.step > h2{border-bottom:0 !important}
+  footer{border-top:0 !important}
+}
+
+/* ============================================================
+   ASPECTE (skin-uri) — retro / cald / albastru / alb-negru
+   Selector cu specificitate mai mare decat straturile de baza.
+   ============================================================ */
+html[data-skin="cald"]{ --bg:#F7F4ED; --panel:#FFFFFF; --ink:#25282D; --muted:#6B655C; --line:#E8E2D6; --accent:#0F766E; --accent-ink:#FFFFFF; --accent-soft:#E4F3EF; --warn:#B0492A; --warn-soft:#FCEDE4; --ok:#2E7D5B; --ok-soft:#E6F4EC; --paper:#FFFDF7; --paper-ink:#22201C; --paper-edge:#DFD8CA; --coral:#E2725B; --mint:#3EBFA0; --radius-lg:18px; --radius-sm:12px; --radius-xl:22px; --grad:linear-gradient(135deg,#0A665E 0%,#0E7A6E 55%,#10786C 100%); --grad-soft:linear-gradient(120deg,#FBF3E9 0%,#F1F8F4 48%,#FBEFE9 100%); --sh-sm:0 1px 2px rgba(52,46,36,.05),0 5px 16px -10px rgba(52,46,36,.22); --sh-md:0 3px 8px rgba(52,46,36,.06),0 18px 38px -20px rgba(52,46,36,.30); --sh-lg:0 26px 64px -28px rgba(52,46,36,.38) }
+@media (prefers-color-scheme: dark){
+  html[data-skin="cald"]:not([data-theme="light"]){ --bg:#15171C; --panel:#1E2128; --ink:#ECEAE5; --muted:#A9A49B; --line:#353941; --accent:#5FD3BE; --accent-ink:#0C211E; --accent-soft:#1C3532; --warn:#FFAF8E; --warn-soft:#3A241D; --ok:#8EDDB3; --ok-soft:#1B3328; --paper:#F6F2E8; --paper-ink:#22201C; --paper-edge:#4A463E; --coral:#F09C86; --mint:#84DFC7; --radius-lg:18px; --radius-sm:12px; --radius-xl:22px; --grad:linear-gradient(135deg,#4FC7AE 0%,#6FD8C0 55%,#8FE4D0 100%); --grad-soft:linear-gradient(120deg,#20242B 0%,#1B2B29 48%,#2A2220 100%); --sh-sm:0 1px 2px rgba(0,0,0,.35),0 6px 18px -10px rgba(0,0,0,.6); --sh-md:0 3px 10px rgba(0,0,0,.4),0 20px 42px -20px rgba(0,0,0,.7); --sh-lg:0 26px 64px -28px rgba(0,0,0,.8) }
+}
+html[data-skin="cald"][data-theme="dark"]{ --bg:#15171C; --panel:#1E2128; --ink:#ECEAE5; --muted:#A9A49B; --line:#353941; --accent:#5FD3BE; --accent-ink:#0C211E; --accent-soft:#1C3532; --warn:#FFAF8E; --warn-soft:#3A241D; --ok:#8EDDB3; --ok-soft:#1B3328; --paper:#F6F2E8; --paper-ink:#22201C; --paper-edge:#4A463E; --coral:#F09C86; --mint:#84DFC7; --radius-lg:18px; --radius-sm:12px; --radius-xl:22px; --grad:linear-gradient(135deg,#4FC7AE 0%,#6FD8C0 55%,#8FE4D0 100%); --grad-soft:linear-gradient(120deg,#20242B 0%,#1B2B29 48%,#2A2220 100%); --sh-sm:0 1px 2px rgba(0,0,0,.35),0 6px 18px -10px rgba(0,0,0,.6); --sh-md:0 3px 10px rgba(0,0,0,.4),0 20px 42px -20px rgba(0,0,0,.7); --sh-lg:0 26px 64px -28px rgba(0,0,0,.8) }
+html[data-skin="albastru"]{ --bg:#EEF1F4; --panel:#FFFFFF; --ink:#18202C; --muted:#5A6576; --line:#D5DBE3; --accent:#1D3F8F; --accent-ink:#FFFFFF; --accent-soft:#E3E9F6; --warn:#A8261B; --warn-soft:#FBE9E7; --ok:#1E6B3A; --ok-soft:#E4F3E9; --paper:#FFFFFF; --paper-ink:#1A1A1A; --paper-edge:#C9D1DC; --coral:#A8261B; --mint:#3A5FA8; --radius-lg:14px; --radius-sm:8px; --radius-xl:14px; --grad:linear-gradient(135deg,#16306F 0%,#1D3F8F 55%,#2C53A8 100%); --grad-soft:linear-gradient(120deg,#F4F7FC 0%,#EAF0FA 100%); --sh-sm:0 1px 2px rgba(20,30,50,.08); --sh-md:0 6px 18px rgba(20,30,50,.14); --sh-lg:0 24px 60px rgba(20,30,50,.24) }
+@media (prefers-color-scheme: dark){
+  html[data-skin="albastru"]:not([data-theme="light"]){ --bg:#10141B; --panel:#181E28; --ink:#E6EAF0; --muted:#98A3B3; --line:#2A3342; --accent:#7EA2F2; --accent-ink:#0D1320; --accent-soft:#1E2A42; --warn:#FF8F84; --warn-soft:#3A1E1C; --ok:#7FD39B; --ok-soft:#18301F; --paper:#F3F1EC; --paper-ink:#1A1A1A; --paper-edge:#3A4455; --coral:#FF8F84; --mint:#7EA2F2; --radius-lg:14px; --radius-sm:8px; --radius-xl:14px; --grad:linear-gradient(135deg,#5B83D8 0%,#7EA2F2 100%); --grad-soft:linear-gradient(120deg,#151B26 0%,#1A2333 100%); --sh-sm:0 1px 2px rgba(0,0,0,.4); --sh-md:0 8px 20px rgba(0,0,0,.5); --sh-lg:0 24px 60px rgba(0,0,0,.7) }
+}
+html[data-skin="albastru"][data-theme="dark"]{ --bg:#10141B; --panel:#181E28; --ink:#E6EAF0; --muted:#98A3B3; --line:#2A3342; --accent:#7EA2F2; --accent-ink:#0D1320; --accent-soft:#1E2A42; --warn:#FF8F84; --warn-soft:#3A1E1C; --ok:#7FD39B; --ok-soft:#18301F; --paper:#F3F1EC; --paper-ink:#1A1A1A; --paper-edge:#3A4455; --coral:#FF8F84; --mint:#7EA2F2; --radius-lg:14px; --radius-sm:8px; --radius-xl:14px; --grad:linear-gradient(135deg,#5B83D8 0%,#7EA2F2 100%); --grad-soft:linear-gradient(120deg,#151B26 0%,#1A2333 100%); --sh-sm:0 1px 2px rgba(0,0,0,.4); --sh-md:0 8px 20px rgba(0,0,0,.5); --sh-lg:0 24px 60px rgba(0,0,0,.7) }
+html[data-skin="mono"]{ --bg:#FFFFFF; --panel:#FFFFFF; --ink:#111111; --muted:#555555; --line:#C9C9C9; --accent:#111111; --accent-ink:#FFFFFF; --accent-soft:#EFEFEF; --warn:#111111; --warn-soft:#F0F0F0; --ok:#111111; --ok-soft:#EFEFEF; --paper:#FFFFFF; --paper-ink:#000000; --paper-edge:#BDBDBD; --coral:#111111; --mint:#666666; --radius-lg:10px; --radius-sm:6px; --radius-xl:10px; --grad:linear-gradient(135deg,#111111 0%,#333333 100%); --grad-soft:linear-gradient(120deg,#FAFAFA 0%,#F0F0F0 100%); --sh-sm:0 1px 2px rgba(0,0,0,.08); --sh-md:0 6px 16px rgba(0,0,0,.12); --sh-lg:0 24px 56px rgba(0,0,0,.18) }
+@media (prefers-color-scheme: dark){
+  html[data-skin="mono"]:not([data-theme="light"]){ --bg:#0B0B0B; --panel:#151515; --ink:#F5F5F5; --muted:#B0B0B0; --line:#3A3A3A; --accent:#F5F5F5; --accent-ink:#0B0B0B; --accent-soft:#252525; --warn:#F5F5F5; --warn-soft:#252525; --ok:#F5F5F5; --ok-soft:#252525; --paper:#FFFFFF; --paper-ink:#000000; --paper-edge:#999999; --coral:#F5F5F5; --mint:#999999; --radius-lg:10px; --radius-sm:6px; --radius-xl:10px; --grad:linear-gradient(135deg,#E5E5E5 0%,#FFFFFF 100%); --grad-soft:linear-gradient(120deg,#151515 0%,#1E1E1E 100%); --sh-sm:0 1px 2px rgba(0,0,0,.6); --sh-md:0 8px 20px rgba(0,0,0,.7); --sh-lg:0 24px 56px rgba(0,0,0,.8) }
+}
+html[data-skin="mono"][data-theme="dark"]{ --bg:#0B0B0B; --panel:#151515; --ink:#F5F5F5; --muted:#B0B0B0; --line:#3A3A3A; --accent:#F5F5F5; --accent-ink:#0B0B0B; --accent-soft:#252525; --warn:#F5F5F5; --warn-soft:#252525; --ok:#F5F5F5; --ok-soft:#252525; --paper:#FFFFFF; --paper-ink:#000000; --paper-edge:#999999; --coral:#F5F5F5; --mint:#999999; --radius-lg:10px; --radius-sm:6px; --radius-xl:10px; --grad:linear-gradient(135deg,#E5E5E5 0%,#FFFFFF 100%); --grad-soft:linear-gradient(120deg,#151515 0%,#1E1E1E 100%); --sh-sm:0 1px 2px rgba(0,0,0,.6); --sh-md:0 8px 20px rgba(0,0,0,.7); --sh-lg:0 24px 56px rgba(0,0,0,.8) }
+
+/* Albastru si alb-negru: revenire la interfata plata, fara stratul de design */
+:is(html[data-skin="albastru"],html[data-skin="mono"]) body{background-image:none;background-color:var(--bg);background-attachment:scroll}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) body::before{display:none !important}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) header.top{background:none;border:0;box-shadow:none;border-radius:0;
+  padding:8px 2px 18px;margin-bottom:0;overflow:visible;animation:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) header.top::before{display:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) header.top::after{display:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) header.top h1{font-family:inherit;font-size:1.6rem;font-weight:800;letter-spacing:-.015em}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) header.top h1 svg{width:40px;height:40px;animation:none;filter:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) header.top .tag{color:var(--ink);font-variant:normal;letter-spacing:normal;font-weight:600}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) main > *{animation:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) section.step{border-radius:var(--radius-lg);box-shadow:none;background-image:none;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) details.intro{border-radius:var(--radius-lg);box-shadow:none;background-image:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) section.step > h2{border-bottom:0;padding-bottom:0;margin-bottom:12px;letter-spacing:normal}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) section.step > h2 .n{width:26px;height:26px;border-radius:50%;background:var(--accent);
+  color:var(--accent-ink);border:0;box-shadow:none;font-family:inherit;font-variant-numeric:normal;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) section.step:hover > h2 .n{transform:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .fs-group{border-radius:999px;box-shadow:none;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .theme-btn{border-radius:999px;box-shadow:none;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .fs-group button[aria-pressed="true"]{background:var(--accent)}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .theme-btn:hover{transform:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) button.btn{border-radius:var(--radius-sm);box-shadow:none;overflow:visible;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) button.btn:not(:disabled):hover{transform:none;box-shadow:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) button.btn:not(:disabled):active{transform:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) button.btn.primary{background:var(--accent);background-image:none;border-color:var(--accent);
+  color:var(--accent-ink);box-shadow:none;text-shadow:none;animation:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) button.btn.primary::after{display:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) input[type=text],:is(html[data-skin="albastru"],html[data-skin="mono"]) input[type=email],:is(html[data-skin="albastru"],html[data-skin="mono"]) input[type=tel],:is(html[data-skin="albastru"],html[data-skin="mono"]) input[type=search],
+:is(html[data-skin="albastru"],html[data-skin="mono"]) input[type=date],:is(html[data-skin="albastru"],html[data-skin="mono"]) select,:is(html[data-skin="albastru"],html[data-skin="mono"]) textarea{border-radius:var(--radius-sm);box-shadow:none;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .seg{border-radius:var(--radius-sm)}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .seg label:has(input:checked){background:var(--accent);color:var(--accent-ink)}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .paper{border-radius:4px;border:1px solid var(--paper-edge);color:var(--paper-ink);
+  letter-spacing:normal;background:var(--paper);background-image:none;text-shadow:none;
+  box-shadow:0 1px 0 var(--paper-edge),0 10px 24px -18px rgba(20,30,50,.5);
+  animation:none;transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .paper::before{width:4px;border-radius:4px 0 0 4px;opacity:.85;
+  background:var(--accent);box-shadow:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .paper-wrap:hover .paper{box-shadow:0 1px 0 var(--paper-edge),0 10px 24px -18px rgba(20,30,50,.5)}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .paper .ph{background:#FFF1B8;color:#6B4E00;border-radius:3px;box-shadow:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .notice{border-radius:0 var(--radius-sm) var(--radius-sm) 0;border-left-width:4px}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .toast{border-radius:999px;box-shadow:none;transform:translateX(-50%) translateY(20px)}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .toast.show{transform:translateX(-50%) translateY(0)}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .badge{border-radius:999px}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) footer{border-top:0;padding-top:0}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) details[open] > p,:is(html[data-skin="albastru"],html[data-skin="mono"]) details[open] > ul,:is(html[data-skin="albastru"],html[data-skin="mono"]) details[open] > pre{animation:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .linkbtn,:is(html[data-skin="albastru"],html[data-skin="mono"]) summary{transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .reg-item,:is(html[data-skin="albastru"],html[data-skin="mono"]) .anexe-list li,:is(html[data-skin="albastru"],html[data-skin="mono"]) .co-item,:is(html[data-skin="albastru"],html[data-skin="mono"]) .cmp-item,:is(html[data-skin="albastru"],html[data-skin="mono"]) .results li,:is(html[data-skin="albastru"],html[data-skin="mono"]) .an-list li{transition:none}
+:is(html[data-skin="albastru"],html[data-skin="mono"]) .paper-wrap{overflow-x:auto}
+@media (hover:hover){
+  :is(html[data-skin="albastru"],html[data-skin="mono"]) .reg-item:hover,:is(html[data-skin="albastru"],html[data-skin="mono"]) .anexe-list li:hover,:is(html[data-skin="albastru"],html[data-skin="mono"]) .co-item:hover,
+  :is(html[data-skin="albastru"],html[data-skin="mono"]) .cmp-item:hover,:is(html[data-skin="albastru"],html[data-skin="mono"]) .results li:hover,:is(html[data-skin="albastru"],html[data-skin="mono"]) .an-list li:hover{transform:none;box-shadow:none}
+}
+html[data-skin="albastru"] button.btn.copied{background:#1E6B3A;border-color:#1E6B3A;color:#FFFFFF}
+html[data-skin="mono"] button.btn.copied{background:#111111;border-color:#111111;color:#FFFFFF}
+html[data-skin="mono"] .paper .ph{background:#E2E2E2;color:#000000;box-shadow:none}
+html[data-skin="mono"] .paper::before{background:#111111}
+@media (max-width:559px){
+  html .top-tools{flex-wrap:wrap;row-gap:6px}
+  html #skinBtn{white-space:nowrap}
+}
+
 </style>
 </head>
 <body>
@@ -309,7 +718,7 @@ details.intro p:first-of-type{margin-top:6px}
 
 <header class="top">
   <div>
-    <h1><svg viewBox="0 0 64 64" aria-hidden="true"><g transform="rotate(-8 32 32)" fill="none" stroke="currentColor" stroke-linecap="round"><rect x="8" y="15" width="48" height="34" rx="6" stroke-width="4"/><rect x="13" y="20" width="38" height="24" rx="3" stroke-width="1.6"/><path d="M18 28h6M28 28h17M18 37h8M30 37h15" stroke-width="3"/></g></svg>Petent</h1>
+    <h1><svg viewBox="0 0 64 64" aria-hidden="true"><g transform="rotate(-6 32 32)" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="13" y="9" width="38" height="46" rx="7" stroke-width="3.6"/><path d="M21 24h22M21 33h22M21 42h14" stroke-width="3.2"/></g><circle cx="51" cy="15" r="6" style="fill:var(--coral)"/></svg>Petent</h1>
     <p class="tag">Cereri și sesizări către autorități</p>
     <p>Alegi primăria sau instituția de control, alegi ce ceri sau ce semnalezi, iar documentul se deschide gata scris în aplicația ta de e-mail.</p>
   </div>
@@ -320,6 +729,7 @@ details.intro p:first-of-type{margin-top:6px}
       <button type="button" class="s3" data-scale="1.5" aria-label="Mărimea textului: foarte mare, 150%">A</button>
     </div>
     <button class="theme-btn" id="themeBtn" type="button">Temă: auto</button>
+    <button class="theme-btn" id="skinBtn" type="button" aria-label="Aspect: hârtie veche de dosar. Apasă pentru următorul aspect.">Aspect: Hârtie</button>
   </div>
 </header>
 
@@ -4151,6 +4561,54 @@ setTimeout(()=>{
     }
   }catch(_){}
 },300);
+</script>
+
+<script>
+/* Aspecte vizuale — strat separat. Nu modifica nicio functie a aplicatiei. */
+(function(){
+  var SKINS=[
+    {id:"retro",    label:"Hârtie",    desc:"hârtie veche de dosar", ink:"#0F766E", bg:"#FBF6EC", dot:"#E2725B"},
+    {id:"cald",     label:"Cald",      desc:"cald, verde-petrol",     ink:"#0F766E", bg:"#FFFFFF", dot:"#E2725B"},
+    {id:"albastru", label:"Albastru",  desc:"albastrul original",     ink:"#1D3F8F", bg:"#FFFFFF", dot:"#A8261B"},
+    {id:"mono",     label:"Alb-negru", desc:"alb-negru, fără culoare",ink:"#111111", bg:"#FFFFFF", dot:"#111111"}
+  ];
+  var KEY="c544_skin", root=document.documentElement, btn=document.getElementById("skinBtn");
+  function load(){
+    try{
+      var v=JSON.parse(localStorage.getItem(KEY));
+      for(var i=0;i<SKINS.length;i++) if(SKINS[i].id===v) return SKINS[i];
+    }catch(e){}
+    return SKINS[0];
+  }
+  function icon(c){
+    var svg="<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'>"+
+      "<rect width='64' height='64' rx='14' fill='"+c.bg+"'/>"+
+      "<g transform='rotate(-6 32 32)' fill='none' stroke='"+c.ink+"' stroke-linecap='round' stroke-linejoin='round'>"+
+      "<rect x='13' y='9' width='38' height='46' rx='7' stroke-width='3.6'/>"+
+      "<path d='M21 24h22M21 33h22M21 42h14' stroke-width='3.2'/></g>"+
+      "<circle cx='51' cy='15' r='6' fill='"+c.dot+"'/></svg>";
+    return "data:image/svg+xml,"+encodeURIComponent(svg);
+  }
+  var cur=load();
+  function apply(){
+    root.setAttribute("data-skin",cur.id);
+    if(btn){
+      btn.textContent="Aspect: "+cur.label;
+      btn.setAttribute("aria-label","Aspect: "+cur.desc+". Apasă pentru următorul aspect.");
+    }
+    var href=icon(cur);
+    var a=document.querySelector('link[rel="icon"]'), b=document.querySelector('link[rel="apple-touch-icon"]');
+    if(a) a.href=href;
+    if(b) b.href=href;
+  }
+  if(btn) btn.addEventListener("click",function(){
+    var i=0; for(var k=0;k<SKINS.length;k++) if(SKINS[k].id===cur.id) i=k;
+    cur=SKINS[(i+1)%SKINS.length];
+    try{ localStorage.setItem(KEY,JSON.stringify(cur.id)); }catch(e){}
+    apply();
+  });
+  apply();
+})();
 </script>
 </body>
 </html>
